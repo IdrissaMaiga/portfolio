@@ -7,7 +7,7 @@
 
 My personal portfolio website with an interactive AI chat feature, 3D graphics, animated backgrounds, and a projects showcase. Built with Next.js, Three.js, and the Groq API.
 
-**Live:** [idrissamaigainfo.vercel.app](https://idrissamaigainfo.vercel.app)
+**Live:** [idrissamaiga.iditechs.com](https://idrissamaiga.iditechs.com)
 
 ---
 
