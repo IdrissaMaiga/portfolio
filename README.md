@@ -1,3 +1,108 @@
-# Idrissamaigainfo
- 🚀 Exciting News! 🚀  I’m thrilled to share something I’ve been working on – my **personal website**, built with **Next.js** and **DeepSeek**! 🎉  This website not only reflects my journey as a **Computer Science Engineering student** but also serves as a space where you can learn more about me, my projects, and what drives me. 🌐  ## Key Features  - **Interactive Chat Feature**: You can interact with a custom chat feature, ask about my experiences, my work, or just say hello! It's all designed to make connecting and learning more seamless.    - **Projects Showcase**: A place where you can explore my projects and the work I've done so far.  - **GitHub Integration**: I've also included my GitHub for anyone who’d like to dive deeper into the code, see what I’ve been working on, or maybe even contribute.  Here’s the link to my GitHub:   [Your GitHub Link] 💻  ## How to Run  1. Clone this repository:      ```bash     git clone [Your Repository Link]     ```  2. Navigate to the project directory:      ```bash     cd your-project-directory     ```  3. Install the required dependencies:      ```bash     npm install     ```  4. Run the development server:      ```bash     npm run dev     ```     Your website will be running on [http://localhost:3000](http://localhost:3000).  ## Feedback & Contributions  I’d love to hear your thoughts on the website, and any feedback is always welcome! 😄  If you want to contribute or dive deeper into the code, feel free to explore and open issues or pull requests.  ## Technologies Used  - **Next.js** - **DeepSeek** - **  Thanks for checking it out, and happy coding! 👨‍💻  ---  ### #WebDevelopment #NextJS #DeepSeek #PersonalWebsite #TechCommunity #SoftwareDevelopment #OpenSource #GitHub #Innovation #BuildingInPublic
-![image](https://github.com/user-attachments/assets/2194a59b-98d2-48e4-96de-12a0be9dce79)
+# idrissamaiga.info
+
+![Next.js](https://img.shields.io/badge/Next.js_14-000000?style=flat-square&logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-000000?style=flat-square&logo=threedotjs&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+
+My personal portfolio website with an interactive AI chat feature, 3D graphics, animated backgrounds, and a projects showcase. Built with Next.js, Three.js, and the Groq API.
+
+**Live:** [idrissamaiga.info](https://idrissamaiga.info)
+
+<!-- SCREENSHOT PLACEHOLDER -->
+<!-- ![Portfolio](screenshots/portfolio.png) -->
+
+---
+
+## Features
+
+- **AI chat** -- ask questions about me, my experience, or my projects via an integrated chatbot (Groq API)
+- **3D graphics** -- interactive visuals built with Three.js and React Three Fiber
+- **Matrix background** -- animated code-rain background effect
+- **Projects showcase** -- portfolio of highlighted projects with links
+- **Skills section** -- organized technical skills display
+- **Contact form** -- reach out via the built-in contact form (Nodemailer)
+- **CV endpoint** -- downloadable resume
+- **Dark mode** -- full dark mode support
+- **Smooth animations** -- Framer Motion + GSAP transitions throughout
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| 3D | Three.js, React Three Fiber, Drei |
+| Animation | Framer Motion, GSAP |
+| UI | Tailwind CSS, Shadcn/ui, Lucide Icons |
+| AI | Groq SDK |
+| Email | Nodemailer |
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+
+### Installation
+
+```bash
+git clone https://github.com/IdrissaMaiga/Idrissamaigainfo.git
+cd Idrissamaigainfo
+npm install
+```
+
+### Environment Variables
+
+Create a `.env.local` file:
+
+```env
+GROQ_API_KEY=your-groq-api-key
+EMAIL_USER=your-email
+EMAIL_PASS=your-email-password
+```
+
+### Run
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Project Structure
+
+```
+Idrissamaigainfo/
+├── app/
+│   ├── api/
+│   │   ├── ai/route.ts          # AI chat endpoint
+│   │   ├── contact/route.ts     # Contact form handler
+│   │   └── cv/route.ts          # CV download endpoint
+│   ├── layout.tsx
+│   ├── loading.tsx
+│   └── page.tsx                 # Home (hero, about, projects, skills, contact)
+├── components/
+│   ├── hero-section.tsx
+│   ├── about-section.tsx
+│   ├── projects-section.tsx
+│   ├── skills-section.tsx
+│   ├── contact-section.tsx
+│   ├── chat-button.tsx          # AI chat trigger
+│   ├── matrix-background.tsx    # Animated matrix effect
+│   ├── navbar-section.tsx
+│   ├── footer.tsx
+│   └── ui/                      # Shadcn/ui components
+├── lib/
+│   └── utils.ts
+└── public/
+    └── logos/
+```
+
+## Contributing
+
+Contributions are welcome. Fork the repo, create a branch, and submit a pull request.
+
+## License
+
+MIT
