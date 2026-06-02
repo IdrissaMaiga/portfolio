@@ -1,4 +1,4 @@
-# idrissamaiga.info
+# idrissamaiga.iditechs.com
 
 ![Next.js](https://img.shields.io/badge/Next.js_14-000000?style=flat-square&logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
@@ -7,7 +7,7 @@
 
 My personal portfolio website with an interactive AI chat feature, 3D graphics, animated backgrounds, and a projects showcase. Built with Next.js, Three.js, and the Groq API.
 
-**Live:** [idrissamaiga.info](https://idrissamaiga.info)
+**Live:** [idrissamaiga.iditechs.com](https://idrissamaiga.iditechs.com)
 
 <!-- SCREENSHOT PLACEHOLDER -->
 <!-- ![Portfolio](screenshots/portfolio.png) -->
