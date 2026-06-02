@@ -47,8 +47,8 @@ My personal portfolio website with an interactive AI chat feature, 3D graphics, 
 ### Installation
 
 ```bash
-git clone https://github.com/IdrissaMaiga/Idrissamaigainfo.git
-cd Idrissamaigainfo
+git clone https://github.com/IdrissaMaiga/portfolio.git
+cd portfolio
 npm install
 ```
 
@@ -73,7 +73,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Project Structure
 
 ```
-Idrissamaigainfo/
+portfolio/
 ├── app/
 │   ├── api/
 │   │   ├── ai/route.ts          # AI chat endpoint
