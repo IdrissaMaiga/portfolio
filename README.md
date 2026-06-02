@@ -9,9 +9,6 @@ My personal portfolio website with an interactive AI chat feature, 3D graphics, 
 
 **Live:** [idrissamaiga.iditechs.com](https://idrissamaiga.iditechs.com)
 
-<!-- SCREENSHOT PLACEHOLDER -->
-<!-- ![Portfolio](screenshots/portfolio.png) -->
-
 ---
 
 ## Features
