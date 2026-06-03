@@ -80,26 +80,28 @@ The classic example: a digital signature on an email means the sender cannot lat
 
 ## Core Security Concepts
 
-### Threat vs. Vulnerability vs. Exploit
+### Threat, Vulnerability, Exploit -- What's the Difference?
 
-| Concept | Definition | Example |
-|---------|-----------|---------|
-| **Threat** | Potential danger to assets | APT groups, ransomware, misconfigurations |
-| **Vulnerability** | Weakness that can be exploited | Unpatched software, weak passwords, open ports |
-| **Exploit** | Mechanism to leverage a vulnerability | SQL injection, buffer overflow, phishing |
+These three words get thrown around interchangeably, but they mean very different things. Think of it like a house:
+
+- A **vulnerability** is an unlocked window. It's a weakness that exists whether or not anyone knows about it -- unpatched software, a default password left in production, an open S3 bucket.
+- A **threat** is the burglar walking down your street. It's anything that *could* exploit a weakness -- an APT group, a disgruntled employee, even a misconfigured cron job that accidentally deletes your database.
+- An **exploit** is the burglar climbing through that unlocked window. It's the actual mechanism used to turn a vulnerability into damage -- a SQL injection payload, a buffer overflow, a phishing email with a malicious link.
+
+A vulnerability without a threat is just technical debt. A threat without a vulnerability has no way in. An exploit is what happens when both line up.
 
 ### Risk
 
-**Risk = Likelihood × Impact**
+**Risk = Likelihood x Impact**
 
-Four strategies to manage risk:
+You can't eliminate risk. You manage it. There are four ways:
 
-| Strategy | Description |
-|----------|------------|
-| **Mitigate** | Reduce the risk by patching vulnerabilities, adding firewalls |
-| **Accept** | Acknowledge it and proceed when mitigation costs exceed potential loss |
-| **Transfer** | Shift risk to a third party through cyber insurance or SLAs |
-| **Avoid** | Eliminate the activity that creates the risk entirely |
+- **Mitigate** -- reduce the risk directly. Patch the vulnerability, add a WAF, enforce MFA. This is the default move for anything critical.
+- **Accept** -- acknowledge it and move on. If fixing a low-severity issue costs more than the potential damage, sometimes the right call is to document it and accept the residual risk.
+- **Transfer** -- make it someone else's problem. Cyber insurance, SLAs with your cloud provider, or outsourcing PCI compliance to a payment processor like Stripe.
+- **Avoid** -- stop doing the thing that creates the risk. If storing credit card numbers creates too much liability, don't store them at all -- let Stripe handle it.
+
+The key insight: security is not about being invulnerable. It's about making informed trade-offs between cost, usability, and exposure.
 
 ## Why This Matters for Full-Stack Developers
 
