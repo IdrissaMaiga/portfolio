@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { fetchGitHubActivity } from '@/lib/github';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const activity = await fetchGitHubActivity();

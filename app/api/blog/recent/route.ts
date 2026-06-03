@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { getAllPosts } from "@/lib/blog";
 
 export async function GET() {

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getPostBySlug, getPostSlugs } from "@/lib/blog";
+
+export const dynamic = "force-dynamic";
 import { components } from "@/components/blog/mdx-components";
 import BlogHeader from "@/components/blog/blog-header";
 import { FiArrowLeft } from "react-icons/fi";
