@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAllPosts } from "@/lib/blog";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 
@@ -24,7 +25,8 @@ BEHAVIOR:
 - Be conversational and helpful. Answer questions naturally with useful information.
 - Use tools ONLY when the user explicitly asks to SEE, OPEN, DOWNLOAD, NAVIGATE, or DO something.
 - Examples of when to use tools: "show me projects" → navigate. "download resume" → download. "open GitHub" → open link. "I want to hire him, my email is X" → send_message.
-- Examples of when NOT to use tools: "what projects has he built?" → just describe them. "tell me about his skills" → just answer. "what's his experience?" → just explain.
+- Examples of when NOT to use tools: "what projects has he built?" → just describe them. "tell me about his skills" → just answer. "what's his experience?" → just explain. "what's his latest post about?" → describe the blog post from your context.
+- You have FULL knowledge of Idrissa's blog posts including their content. When asked about posts, articles, or writing, answer directly from context. Describe the content, topics, and key points. Do NOT just redirect to the blog.
 - ALWAYS include a helpful text response. Never return empty text.
 - Keep responses concise (under 200 words) but informative.
 - When using a tool, briefly explain what you're doing in text too.`;
@@ -70,6 +72,18 @@ Certifications: HÖOK SHMN Mentor Camp 2025, INDUSAC Co-Creation Certificate, Sp
 
 Interests: AI development, cloud technologies, algorithmic challenges (LeetCode), building scalable solutions
 `;
+
+function getBlogContext(): string {
+  try {
+    const posts = getAllPosts();
+    if (posts.length === 0) return "\nBlog: No posts published yet.";
+    return "\nBlog Posts:\n" + posts.map(p =>
+      `- "${p.title}" (${p.date}) - ${p.description} [Tags: ${p.tags.join(", ")}] [URL: /blog/${p.slug}]\n  Content summary: ${p.content.slice(0, 500).replace(/[#*\n]+/g, " ").trim()}...`
+    ).join("\n");
+  } catch {
+    return "";
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -205,6 +219,14 @@ export async function POST(req: NextRequest) {
           }
         },
         {
+          name: "get_blog_posts",
+          description: "Fetch the list of blog posts with their titles, descriptions, tags, and dates. Use this when someone asks about blog posts, articles, latest writing, or what Idrissa has published.",
+          parameters: {
+            type: "OBJECT",
+            properties: {},
+          }
+        },
+        {
           name: "send_message_to_idrissa",
           description: "Send a message directly to Idrissa on behalf of the visitor. Use this when someone says they're interested in working with him, wants to hire him, or wants to leave a message. Ask for their name and email first if not provided.",
           parameters: {
@@ -243,7 +265,7 @@ export async function POST(req: NextRequest) {
           contents: [
             {
               role: "user",
-              parts: [{ text: PORTFOLIO_CONTEXT }],
+              parts: [{ text: PORTFOLIO_CONTEXT + getBlogContext() }],
             },
             {
               role: "model",
@@ -371,6 +393,16 @@ export async function POST(req: NextRequest) {
           case "show_stats":
             fallbackText = `Here are Idrissa's key achievements and metrics.`;
             break;
+          case "get_blog_posts": {
+            const posts = getAllPosts();
+            if (posts.length > 0) {
+              fallbackText = `Idrissa has ${posts.length} blog post${posts.length > 1 ? "s" : ""}:\n\n` +
+                posts.map(p => `**${p.title}** (${p.date})\n${p.description}\nTags: ${p.tags.join(", ")}`).join("\n\n");
+            } else {
+              fallbackText = "Idrissa hasn't published any blog posts yet, but they're coming soon!";
+            }
+            break;
+          }
           case "send_message_to_idrissa":
             fallbackText = `I've sent your message to Idrissa. He'll get back to you soon!`;
             break;

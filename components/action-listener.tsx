@@ -80,6 +80,11 @@ export default function ActionListener() {
           }
           break;
         }
+        case "get_blog_posts": {
+          const insights = document.getElementById("insights");
+          if (insights) insights.scrollIntoView({ behavior: "smooth" });
+          break;
+        }
         case "send_message_to_idrissa": {
           fetch("/api/contact", {
             method: "POST",
