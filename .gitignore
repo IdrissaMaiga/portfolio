@@ -47,3 +47,11 @@ turbo/
 # Optional: Local Firebase or Supabase emulators
 .firebase/
 .supabase/
+
+# LinkedIn OAuth token
+.linkedin-token.json
+
+# MCP server compiled output
+mcp-server/*.js
+
+.vercel
