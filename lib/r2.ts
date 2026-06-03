@@ -1,0 +1,43 @@
+const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || "";
+const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN || "";
+const BUCKET = "portfolio-uploads";
+const PUBLIC_URL = "https://pub-5dbae7ae21f345449868f710152b690e.r2.dev";
+
+export async function uploadToR2(
+  key: string,
+  body: Buffer | Uint8Array,
+  contentType: string = "image/png"
+): Promise<string> {
+  const res = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET}/objects/${encodeURIComponent(key)}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${API_TOKEN}`,
+        "Content-Type": contentType,
+      },
+      body,
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`R2 upload failed: ${err}`);
+  }
+
+  return `${PUBLIC_URL}/${key}`;
+}
+
+export async function deleteFromR2(key: string): Promise<void> {
+  await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET}/objects/${encodeURIComponent(key)}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${API_TOKEN}` },
+    }
+  );
+}
+
+export function getR2PublicUrl(key: string): string {
+  return `${PUBLIC_URL}/${key}`;
+}
