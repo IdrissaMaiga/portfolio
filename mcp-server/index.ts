@@ -159,6 +159,58 @@ server.tool("linkedin_share", "Post content to LinkedIn", {
   return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
 });
 
+// Tool: Create blog post
+server.tool("create_blog_post", "Create a new blog post on the portfolio", {
+  title: z.string().describe("Blog post title"),
+  content: z.string().describe("MDX content (markdown with optional JSX)"),
+  tags: z.array(z.string()).describe("Array of tags"),
+  description: z.string().describe("Short description for SEO"),
+  image: z.string().optional().describe("Cover image path (default: /logos/skills.png)"),
+  slug: z.string().optional().describe("Custom URL slug (auto-generated from title if not provided)"),
+}, async ({ title, content, tags, description, image, slug }) => {
+  const baseUrl = process.env.NODE_ENV === "production"
+    ? (process.env.SITE_URL_PROD || "https://idrissamaiga.iditechs.com")
+    : (process.env.SITE_URL_DEV || "http://localhost:3000");
+  const adminKey = process.env.ADMIN_API_KEY;
+  const res = await fetch(`${baseUrl}/api/admin/blog`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-admin-key": adminKey || "" },
+    body: JSON.stringify({ title, content, tags, description, image, slug }),
+  });
+  const result = await res.json();
+  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+});
+
+// Tool: List blog posts
+server.tool("list_blog_posts", "List all blog posts", {}, async () => {
+  const baseUrl = process.env.NODE_ENV === "production"
+    ? (process.env.SITE_URL_PROD || "https://idrissamaiga.iditechs.com")
+    : (process.env.SITE_URL_DEV || "http://localhost:3000");
+  const adminKey = process.env.ADMIN_API_KEY;
+  const res = await fetch(`${baseUrl}/api/admin/blog`, {
+    headers: { "x-admin-key": adminKey || "" },
+  });
+  const result = await res.json();
+  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+});
+
+// Tool: Delete blog post
+server.tool("delete_blog_post", "Delete a blog post by slug", {
+  slug: z.string().describe("The post slug to delete"),
+}, async ({ slug }) => {
+  const baseUrl = process.env.NODE_ENV === "production"
+    ? (process.env.SITE_URL_PROD || "https://idrissamaiga.iditechs.com")
+    : (process.env.SITE_URL_DEV || "http://localhost:3000");
+  const adminKey = process.env.ADMIN_API_KEY;
+  const res = await fetch(`${baseUrl}/api/admin/blog`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", "x-admin-key": adminKey || "" },
+    body: JSON.stringify({ slug }),
+  });
+  const result = await res.json();
+  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+});
+
 // Tool: Trigger rebuild
 server.tool("trigger_rebuild", "Trigger a Vercel redeployment", {}, async () => {
   const hookUrl = process.env.VERCEL_DEPLOY_HOOK;

@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     } catch (emailError) {
       console.error('Error sending email:', emailError);
       return NextResponse.json(
-        { error: 'Failed to send email. Please try again later or contact me directly at maigadrisking@gmail.com' },
+        { error: 'Failed to send email. Please try again later or contact me directly at idrissa.maiga@iditechs.com' },
         { status: 500 }
       );
     }
