@@ -1,0 +1,125 @@
+---
+title: "Network Security Fundamentals: The CIA Triad and Beyond"
+date: "2026-06-03"
+tags: ["cybersecurity", "networking", "cloud-security", "fundamentals"]
+description: "A comprehensive guide to network security fundamentals — the CIA Triad, authentication, accountability, non-repudiation, and core security concepts every engineer should know."
+image: "/logos/network-security-fundamentals.png"
+linkedinPosted: false
+---
+
+## What Is Network Security?
+
+**Network security** is a comprehensive framework of technologies, processes, and policies designed to protect the **integrity**, **confidentiality**, and **availability** of networked systems and data — spanning on-premises infrastructure, cloud environments, and hybrid architectures.
+
+Its primary goals are to:
+
+- Protect data integrity
+- Ensure confidentiality
+- Maintain availability
+- Control access
+- Detect and respond to threats
+- Enable compliance
+
+Whether you're building microservices, deploying to AWS, or managing a Kubernetes cluster, understanding these fundamentals is non-negotiable.
+
+## The CIA Triad
+
+The **CIA triad** is the foundational model of information security. Every security control, policy, or technology ultimately serves one or more of these three pillars.
+
+### Confidentiality
+
+**Confidentiality** means preventing unauthorized access to or disclosure of sensitive information.
+
+- **Data Confidentiality:** Only authorized users can read or access the data
+- **Privacy:** Controls how personal data is collected, stored, and disclosed (GDPR, CCPA)
+- **Key technologies:** Encryption, ACLs, VPNs, MFA
+
+### Integrity
+
+**Integrity** means ensuring that information is modified only by authorized processes in authorized ways.
+
+- **Data Integrity:** Information has not been altered in transit or at rest by unauthorized parties
+- **System Integrity:** Systems perform their intended functions without unauthorized manipulation
+- **Key technologies:** Hashing (SHA-256), digital signatures, file integrity monitoring (FIM)
+
+### Availability
+
+**Availability** means ensuring that systems work promptly and that service is not denied to authorized users.
+
+- Protection against DoS/DDoS attacks, hardware failures, and natural disasters
+- **Key technologies:** Redundancy, failover clusters, load balancers, disaster recovery plans
+
+> **Real-world example:** A data breach threatens *confidentiality*. A man-in-the-middle attack altering API responses threatens *integrity*. A DDoS attack bringing down your production servers threatens *availability*.
+
+## Beyond CIA: Authentication, Accountability, and Non-Repudiation
+
+### Authentication
+
+Verifying that entities are who they claim to be:
+
+- **User Authentication:** MFA, biometrics, certificates
+- **Message Authentication:** HMAC, digital signatures
+- **Device Authentication:** Device certificates, TPM attestation
+
+### Accountability
+
+Tracing actions to specific entities:
+
+- **Audit Logging:** SIEM systems recording who did what, when, and where
+- **Forensic Investigation:** Tracing incidents back to the responsible party
+- **Deterrence:** Users act responsibly knowing their actions are tracked
+
+### Non-Repudiation
+
+Proving that actions occurred — preventing denial:
+
+- **Digital Signatures:** Cryptographic proof that a sender signed a document
+- **Blockchain and Timestamps:** Immutable records of when actions occurred
+
+The classic example: a digital signature on an email means the sender cannot later claim they didn't send it.
+
+## Core Security Concepts
+
+### Threat vs. Vulnerability vs. Exploit
+
+| Concept | Definition | Example |
+|---------|-----------|---------|
+| **Threat** | Potential danger to assets | APT groups, ransomware operators, misconfigurations |
+| **Vulnerability** | Weakness that can be exploited | Unpatched software, weak passwords, open ports |
+| **Exploit** | Mechanism to leverage a vulnerability | SQL injection, buffer overflow, phishing |
+
+### Risk
+
+**Risk = Likelihood × Impact**
+
+Risk is managed through four strategies:
+
+| Strategy | Description |
+|----------|------------|
+| **Mitigate** | Reduce the risk (patch vulnerabilities, add firewalls) |
+| **Accept** | Acknowledge the risk and proceed (cost of mitigation exceeds potential loss) |
+| **Transfer** | Shift risk to a third party (cyber insurance, SLAs) |
+| **Avoid** | Eliminate the activity that creates risk |
+
+## Why This Matters for Full-Stack Developers
+
+As a full-stack engineer working with Spring Boot, React, and cloud-native architectures, I encounter these concepts daily:
+
+- **Confidentiality:** JWT token encryption, HTTPS everywhere, environment variable management
+- **Integrity:** API request signing, database transaction integrity, Git commit signing
+- **Availability:** Kubernetes health checks, load balancing, graceful degradation
+- **Authentication:** OAuth 2.0 flows, Google Sign-In integration, role-based access control
+
+Understanding security fundamentals isn't just for security engineers — it's essential for anyone building production systems that handle real user data.
+
+## Key Takeaways
+
+1. The **CIA Triad** (Confidentiality, Integrity, Availability) is the foundation of all security
+2. **Authentication** verifies identity; **Authorization** grants permissions
+3. **Non-repudiation** ensures actions can't be denied — critical for legal and compliance
+4. **Risk management** is about trade-offs, not elimination
+5. Every developer should think about security from day one, not as an afterthought
+
+---
+
+*This post is part of my study notes from the Security of Computer Networks and Clouds course at Óbuda University. More topics coming soon.*
