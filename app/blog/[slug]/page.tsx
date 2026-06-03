@@ -78,6 +78,17 @@ export default function BlogPostPage({ params }: PageProps) {
           {/* Post header */}
           <BlogHeader post={post} />
 
+          {/* Cover image */}
+          {post.image && (
+            <div className="relative w-full h-[200px] sm:h-[300px] md:h-[400px] rounded-2xl overflow-hidden my-8 border border-white/[0.06]">
+              <img
+                src={post.image}
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
           {/* MDX content */}
           <article className="prose-invert max-w-none">
             <MDXRemote source={post.content} components={components} />
