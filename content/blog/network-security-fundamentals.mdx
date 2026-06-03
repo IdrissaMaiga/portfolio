@@ -2,16 +2,16 @@
 title: "Network Security Fundamentals: The CIA Triad and Beyond"
 date: "2026-06-03"
 tags: ["cybersecurity", "networking", "cloud-security", "fundamentals"]
-description: "A comprehensive guide to network security fundamentals — the CIA Triad, authentication, accountability, non-repudiation, and core security concepts every engineer should know."
+description: "A comprehensive guide to network security fundamentals covering the CIA Triad, authentication, accountability, non-repudiation, and core security concepts every engineer should know."
 image: "/logos/network-security-fundamentals.png"
 linkedinPosted: false
 ---
 
 ## What Is Network Security?
 
-**Network security** is a comprehensive framework of technologies, processes, and policies designed to protect the **integrity**, **confidentiality**, and **availability** of networked systems and data — spanning on-premises infrastructure, cloud environments, and hybrid architectures.
+Network security is a framework of technologies, processes, and policies that protect the integrity, confidentiality, and availability of networked systems. It covers on-premises infrastructure, cloud environments, and hybrid setups.
 
-Its primary goals are to:
+The primary goals:
 
 - Protect data integrity
 - Ensure confidentiality
@@ -24,32 +24,32 @@ Whether you're building microservices, deploying to AWS, or managing a Kubernete
 
 ## The CIA Triad
 
-The **CIA triad** is the foundational model of information security. Every security control, policy, or technology ultimately serves one or more of these three pillars.
+The CIA triad is the foundational model of information security. Every security control, policy, or technology serves one or more of these three pillars.
 
 ### Confidentiality
 
-**Confidentiality** means preventing unauthorized access to or disclosure of sensitive information.
+Confidentiality means preventing unauthorized access to sensitive information.
 
-- **Data Confidentiality:** Only authorized users can read or access the data
-- **Privacy:** Controls how personal data is collected, stored, and disclosed (GDPR, CCPA)
-- **Key technologies:** Encryption, ACLs, VPNs, MFA
+- **Data Confidentiality** means only authorized users can read the data
+- **Privacy** controls how personal data is collected, stored, and disclosed (think GDPR, CCPA)
+- **Technologies that help:** encryption, ACLs, VPNs, MFA
 
 ### Integrity
 
-**Integrity** means ensuring that information is modified only by authorized processes in authorized ways.
+Integrity means ensuring information is only modified by authorized processes.
 
-- **Data Integrity:** Information has not been altered in transit or at rest by unauthorized parties
-- **System Integrity:** Systems perform their intended functions without unauthorized manipulation
-- **Key technologies:** Hashing (SHA-256), digital signatures, file integrity monitoring (FIM)
+- **Data Integrity** means information hasn't been altered in transit or at rest
+- **System Integrity** means systems perform their intended functions without unauthorized manipulation
+- **Technologies that help:** hashing (SHA-256), digital signatures, file integrity monitoring
 
 ### Availability
 
-**Availability** means ensuring that systems work promptly and that service is not denied to authorized users.
+Availability means systems work when needed and service isn't denied to authorized users.
 
-- Protection against DoS/DDoS attacks, hardware failures, and natural disasters
-- **Key technologies:** Redundancy, failover clusters, load balancers, disaster recovery plans
+- Protects against DoS/DDoS attacks, hardware failures, and natural disasters
+- **Technologies that help:** redundancy, failover clusters, load balancers, disaster recovery plans
 
-> **Real-world example:** A data breach threatens *confidentiality*. A man-in-the-middle attack altering API responses threatens *integrity*. A DDoS attack bringing down your production servers threatens *availability*.
+> A data breach threatens *confidentiality*. A man-in-the-middle attack altering API responses threatens *integrity*. A DDoS attack bringing down production servers threatens *availability*.
 
 ## Beyond CIA: Authentication, Accountability, and Non-Repudiation
 
@@ -57,24 +57,24 @@ The **CIA triad** is the foundational model of information security. Every secur
 
 Verifying that entities are who they claim to be:
 
-- **User Authentication:** MFA, biometrics, certificates
-- **Message Authentication:** HMAC, digital signatures
-- **Device Authentication:** Device certificates, TPM attestation
+- **User Authentication** through MFA, biometrics, certificates
+- **Message Authentication** through HMAC, digital signatures
+- **Device Authentication** through device certificates, TPM attestation
 
 ### Accountability
 
 Tracing actions to specific entities:
 
-- **Audit Logging:** SIEM systems recording who did what, when, and where
-- **Forensic Investigation:** Tracing incidents back to the responsible party
-- **Deterrence:** Users act responsibly knowing their actions are tracked
+- **Audit Logging** with SIEM systems recording who did what, when, and where
+- **Forensic Investigation** to trace incidents back to the responsible party
+- **Deterrence** because users act more responsibly when they know actions are tracked
 
 ### Non-Repudiation
 
-Proving that actions occurred — preventing denial:
+Proving that actions occurred and preventing denial:
 
-- **Digital Signatures:** Cryptographic proof that a sender signed a document
-- **Blockchain and Timestamps:** Immutable records of when actions occurred
+- **Digital Signatures** provide cryptographic proof that a sender signed a document
+- **Blockchain and Timestamps** create immutable records of when actions occurred
 
 The classic example: a digital signature on an email means the sender cannot later claim they didn't send it.
 
@@ -84,7 +84,7 @@ The classic example: a digital signature on an email means the sender cannot lat
 
 | Concept | Definition | Example |
 |---------|-----------|---------|
-| **Threat** | Potential danger to assets | APT groups, ransomware operators, misconfigurations |
+| **Threat** | Potential danger to assets | APT groups, ransomware, misconfigurations |
 | **Vulnerability** | Weakness that can be exploited | Unpatched software, weak passwords, open ports |
 | **Exploit** | Mechanism to leverage a vulnerability | SQL injection, buffer overflow, phishing |
 
@@ -92,31 +92,30 @@ The classic example: a digital signature on an email means the sender cannot lat
 
 **Risk = Likelihood × Impact**
 
-Risk is managed through four strategies:
+Four strategies to manage risk:
 
 | Strategy | Description |
 |----------|------------|
-| **Mitigate** | Reduce the risk (patch vulnerabilities, add firewalls) |
-| **Accept** | Acknowledge the risk and proceed (cost of mitigation exceeds potential loss) |
-| **Transfer** | Shift risk to a third party (cyber insurance, SLAs) |
-| **Avoid** | Eliminate the activity that creates risk |
+| **Mitigate** | Reduce the risk by patching vulnerabilities, adding firewalls |
+| **Accept** | Acknowledge it and proceed when mitigation costs exceed potential loss |
+| **Transfer** | Shift risk to a third party through cyber insurance or SLAs |
+| **Avoid** | Eliminate the activity that creates the risk entirely |
 
 ## Why This Matters for Full-Stack Developers
 
-As a full-stack engineer working with Spring Boot, React, and cloud-native architectures, I encounter these concepts daily:
+Working with Spring Boot, React, and cloud-native architectures, these concepts come up daily:
 
-- **Confidentiality:** JWT token encryption, HTTPS everywhere, environment variable management
-- **Integrity:** API request signing, database transaction integrity, Git commit signing
-- **Availability:** Kubernetes health checks, load balancing, graceful degradation
-- **Authentication:** OAuth 2.0 flows, Google Sign-In integration, role-based access control
+- **Confidentiality** in JWT token encryption, HTTPS everywhere, environment variable management
+- **Integrity** in API request signing, database transaction integrity, Git commit signing
+- **Availability** in Kubernetes health checks, load balancing, graceful degradation
+- **Authentication** in OAuth 2.0 flows, Google Sign-In integration, role-based access control
 
-Understanding security fundamentals isn't just for security engineers — it's essential for anyone building production systems that handle real user data.
+Understanding security fundamentals isn't just for security engineers. It's essential for anyone building production systems that handle real user data.
 
 ## Key Takeaways
 
 1. The **CIA Triad** (Confidentiality, Integrity, Availability) is the foundation of all security
-2. **Authentication** verifies identity; **Authorization** grants permissions
-3. **Non-repudiation** ensures actions can't be denied — critical for legal and compliance
+2. **Authentication** verifies identity while **Authorization** grants permissions
+3. **Non-repudiation** ensures actions can't be denied, which is critical for legal and compliance
 4. **Risk management** is about trade-offs, not elimination
 5. Every developer should think about security from day one, not as an afterthought
-

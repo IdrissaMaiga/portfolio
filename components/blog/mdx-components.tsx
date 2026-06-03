@@ -107,7 +107,7 @@ function Paragraph({ children, ...props }: React.HTMLAttributes<HTMLParagraphEle
 /* ---------- List items ---------- */
 function Ul({ children, ...props }: React.HTMLAttributes<HTMLUListElement>) {
   return (
-    <ul className="list-disc list-inside space-y-2 mb-5 text-gray-300 marker:text-blue-400/60" {...props}>
+    <ul className="list-disc pl-6 space-y-2 mb-6 text-gray-300 marker:text-blue-400/60" {...props}>
       {children}
     </ul>
   );
@@ -115,7 +115,7 @@ function Ul({ children, ...props }: React.HTMLAttributes<HTMLUListElement>) {
 
 function Ol({ children, ...props }: React.OlHTMLAttributes<HTMLOListElement>) {
   return (
-    <ol className="list-decimal list-inside space-y-2 mb-5 text-gray-300 marker:text-blue-400/60" {...props}>
+    <ol className="list-decimal pl-6 space-y-2 mb-6 text-gray-300 marker:text-blue-400/60" {...props}>
       {children}
     </ol>
   );
@@ -123,9 +123,60 @@ function Ol({ children, ...props }: React.OlHTMLAttributes<HTMLOListElement>) {
 
 function Li({ children, ...props }: React.LiHTMLAttributes<HTMLLIElement>) {
   return (
-    <li className="text-gray-300 leading-relaxed" {...props}>
+    <li className="text-gray-300 leading-relaxed pl-1" {...props}>
       {children}
     </li>
+  );
+}
+
+/* ---------- Table ---------- */
+function Table({ children, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
+  return (
+    <div className="my-6 overflow-x-auto rounded-xl border border-white/[0.08]">
+      <table className="w-full text-sm text-left" {...props}>
+        {children}
+      </table>
+    </div>
+  );
+}
+
+function Thead({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return (
+    <thead className="bg-white/[0.05] text-gray-200 text-xs uppercase tracking-wider" {...props}>
+      {children}
+    </thead>
+  );
+}
+
+function Tbody({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return (
+    <tbody className="divide-y divide-white/[0.06]" {...props}>
+      {children}
+    </tbody>
+  );
+}
+
+function Tr({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
+  return (
+    <tr className="hover:bg-white/[0.02] transition-colors" {...props}>
+      {children}
+    </tr>
+  );
+}
+
+function Th({ children, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <th className="px-4 py-3 font-semibold text-white" {...props}>
+      {children}
+    </th>
+  );
+}
+
+function Td({ children, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <td className="px-4 py-3 text-gray-300" {...props}>
+      {children}
+    </td>
   );
 }
 
@@ -186,4 +237,10 @@ export const components = {
   hr: Hr,
   strong: Strong,
   img: Img,
+  table: Table,
+  thead: Thead,
+  tbody: Tbody,
+  tr: Tr,
+  th: Th,
+  td: Td,
 };
