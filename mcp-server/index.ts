@@ -74,7 +74,7 @@ server.tool("add_project", "Add a new project to the portfolio", {
   features: z.array(z.string()),
   challenges: z.array(z.string()),
   solution: z.string(),
-  image: z.string().default("/logos/skills.png"),
+  image: z.string().default(""),
   githubLink: z.string().nullable().default(null),
   liveLink: z.string().nullable().default(null),
 }, async (params) => {
@@ -165,7 +165,7 @@ server.tool("create_blog_post", "Create a new blog post on the portfolio", {
   content: z.string().describe("MDX content (markdown with optional JSX)"),
   tags: z.array(z.string()).describe("Array of tags"),
   description: z.string().describe("Short description for SEO"),
-  image: z.string().optional().describe("Cover image path (default: /logos/skills.png)"),
+  image: z.string().optional().describe("Cover image URL (R2 URL from /api/admin/upload)"),
   slug: z.string().optional().describe("Custom URL slug (auto-generated from title if not provided)"),
 }, async ({ title, content, tags, description, image, slug }) => {
   const baseUrl = process.env.NODE_ENV === "production"

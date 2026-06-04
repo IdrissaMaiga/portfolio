@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'media.licdn.com' },
+      { protocol: 'https', hostname: 'pub-5dbae7ae21f345449868f710152b690e.r2.dev' },
     ],
   },
 };
