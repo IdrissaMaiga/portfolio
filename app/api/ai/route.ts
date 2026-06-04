@@ -6,7 +6,7 @@ const MAX_TOOL_ROUNDS = 3;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GeminiPart = { text?: string; functionCall?: { name: string; args: any }; functionResponse?: { name: string; response: any } };
-type GeminiMessage = { role: "user" | "model" | "function"; parts: GeminiPart[] };
+type GeminiMessage = { role: "user" | "model"; parts: GeminiPart[] };
 
 const CLIENT_ACTIONS = new Set([
   "navigate_to_section", "show_project", "get_contact_info",
@@ -198,28 +198,60 @@ async function callGemini(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: any[],
 ): Promise<GeminiPart[]> {
+  const payload = {
+    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: messages,
+    tools: [{ functionDeclarations: tools }],
+    tool_config: { function_calling_config: { mode: "AUTO" } },
+    generationConfig: { temperature: 0.3, maxOutputTokens: 1024, topP: 0.95 },
+  };
+
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: messages,
-        tools: [{ functionDeclarations: tools }],
-        tool_config: { function_calling_config: { mode: "AUTO" } },
-        generationConfig: { temperature: 0.3, maxOutputTokens: 1024, topP: 0.95 },
-      }),
+      body: JSON.stringify(payload),
     }
   );
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Gemini API error (${res.status}): ${err}`);
+    console.error("Gemini API error:", res.status, err);
+    throw new Error(`Gemini API error (${res.status})`);
   }
 
   const data = await res.json();
-  const parts = data.candidates?.[0]?.content?.parts || [];
+  const candidate = data.candidates?.[0];
+  let parts = candidate?.content?.parts || [];
+
+  // Gemini 2.5 thinking mode can return empty parts - retry without tools
+  if (parts.length === 0 && messages.length > 0) {
+    console.warn("Empty parts from Gemini, retrying without history");
+    const lastUserMsg = messages.filter(m => m.role === "user").pop();
+    const retryRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [
+            { role: "user", parts: [{ text: PORTFOLIO_CONTEXT }] },
+            { role: "model", parts: [{ text: "Ready." }] },
+            { role: "user", parts: lastUserMsg?.parts || [{ text: "hello" }] },
+          ],
+          tools: [{ functionDeclarations: tools }],
+          generationConfig: { temperature: 0.5, maxOutputTokens: 512 },
+        }),
+      }
+    );
+    if (retryRes.ok) {
+      const retryData = await retryRes.json();
+      parts = retryData.candidates?.[0]?.content?.parts || [];
+    }
+  }
+
   return parts;
 }
 
@@ -260,11 +292,17 @@ export async function POST(req: NextRequest) {
       const textParts = parts.filter((p: any) => p.text).map((p: any) => p.text);
       const text = textParts.join("\n").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
+      console.log(`Agent round ${round}:`, {
+        partsCount: parts.length,
+        functionCalls: functionCalls.map((fc: GeminiPart) => fc.functionCall?.name),
+        hasText: !!text,
+        textPreview: text?.slice(0, 100),
+      });
+
       if (text) finalText = text;
 
       if (functionCalls.length === 0) break;
 
-      // Add model's response (with function calls) to conversation
       messages.push({ role: "model", parts });
 
       // Execute each function call and collect results
@@ -283,8 +321,8 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Send tool results back to Gemini for the next round
-      messages.push({ role: "function" as GeminiMessage["role"], parts: functionResponseParts });
+      // Send tool results back to Gemini (user role with functionResponse parts per Gemini API spec)
+      messages.push({ role: "user", parts: functionResponseParts });
     }
 
     if (!finalText) {
