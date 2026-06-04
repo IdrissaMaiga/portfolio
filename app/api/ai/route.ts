@@ -223,10 +223,13 @@ async function callGemini(
 
   const data = await res.json();
   const candidate = data.candidates?.[0];
-  let parts = candidate?.content?.parts || [];
+  let parts: GeminiPart[] = candidate?.content?.parts || [];
 
-  // Gemini 2.5 thinking mode can return empty parts - retry without tools
-  if (parts.length === 0 && messages.length > 0) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hasUsefulContent = parts.some((p: any) => p.text || p.functionCall);
+
+  // Gemini 2.5 thinking mode can return parts with only thoughtSignature - retry
+  if (!hasUsefulContent && messages.length > 0) {
     console.warn("Empty parts from Gemini, retrying without history");
     const lastUserMsg = messages.filter(m => m.role === "user").pop();
     const retryRes = await fetch(
