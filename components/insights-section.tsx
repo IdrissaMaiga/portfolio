@@ -336,7 +336,7 @@ export default function InsightsSection() {
                   </ul>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-6">
-                    Unable to load GitHub activity.
+                    {ghError ? "Unable to load GitHub activity." : "No recent activity."}
                   </p>
                 )}
               </div>
