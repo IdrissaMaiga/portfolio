@@ -9,7 +9,7 @@ export async function uploadToR2(
   contentType: string = "image/png"
 ): Promise<string> {
   const res = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET}/objects/${encodeURIComponent(key)}`,
+    `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET}/objects/${key.split("/").map(encodeURIComponent).join("/")}`,
     {
       method: "PUT",
       headers: {
@@ -37,7 +37,7 @@ export async function readFromR2(key: string): Promise<string | null> {
 
 export async function deleteFromR2(key: string): Promise<void> {
   await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET}/objects/${encodeURIComponent(key)}`,
+    `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/r2/buckets/${BUCKET}/objects/${key.split("/").map(encodeURIComponent).join("/")}`,
     {
       method: "DELETE",
       headers: { Authorization: `Bearer ${API_TOKEN}` },
