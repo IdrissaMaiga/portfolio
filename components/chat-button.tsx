@@ -46,29 +46,38 @@ export default function ChatButton() {
   useEffect(() => { isChatOpenRef.current = isChatOpen; }, [isChatOpen]);
   useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
 
-  // Load messages from localStorage
+  // Load messages from localStorage (filter out broken streaming state)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = localStorage.getItem("chatMessages");
     if (saved) {
-      try { setMessages(JSON.parse(saved)); } catch { /* ignore corrupt data */ }
+      try {
+        const parsed: Message[] = JSON.parse(saved);
+        const clean = parsed
+          .map(m => ({ ...m, isStreaming: false, fullText: undefined, text: m.fullText || m.text }))
+          .filter(m => m.text && m.text.trim() !== "");
+        if (clean.length > 0) setMessages(clean);
+      } catch { /* ignore corrupt data */ }
     }
   }, []);
 
-  // Debounced save to localStorage (not on every streaming char)
+  // Save to localStorage only when NOT streaming
   useEffect(() => {
+    if (isStreamingRef.current) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       if (typeof window !== "undefined") {
-        const completed = messages.map((msg) => ({
-          ...msg,
-          text: msg.fullText || msg.text,
-          isStreaming: false,
-          fullText: undefined,
-        }));
+        const completed = messages
+          .map((msg) => ({
+            text: msg.fullText || msg.text,
+            sender: msg.sender,
+            timestamp: msg.timestamp,
+            code: msg.code,
+          }))
+          .filter(m => m.text && m.text.trim() !== "");
         localStorage.setItem("chatMessages", JSON.stringify(completed));
       }
-    }, 500);
+    }, 300);
   }, [messages]);
 
   // Scroll to bottom (debounced during streaming)
@@ -261,15 +270,18 @@ export default function ChatButton() {
 
       const containsCode = trimmed.toLowerCase().includes("code") || trimmed.toLowerCase().includes("example") || aiText.includes("```");
 
+      let aiIdx = -1;
       setMessages(prev => {
-        const aiIdx = prev.length;
-        const updated = [...prev, {
+        aiIdx = prev.length;
+        return [...prev, {
           text: "", fullText: aiText, sender: "AI" as const,
           timestamp: Date.now(), code: containsCode, isStreaming: true,
         }];
-        setTimeout(() => streamText(aiText, aiIdx), 300);
-        return updated;
       });
+
+      setTimeout(() => {
+        if (aiIdx >= 0) streamText(aiText, aiIdx);
+      }, 300);
 
       if (!isChatOpenRef.current) setHasUnreadMessage(true);
     } catch (error) {
@@ -381,14 +393,18 @@ export default function ChatButton() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" ref={chatHistory} style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
-              {messages.map((message, index) => (
-                <div key={index} className={`flex flex-col ${message.sender === "User" ? "items-end" : "items-start"}`}>
-                  <div className={`max-w-[85%] px-3.5 py-2.5 ${message.sender === "AI" ? "bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm text-gray-200" : "bg-blue-600/80 rounded-2xl rounded-tr-sm text-white"}`}>
-                    {renderMessageContent(message)}
+              {messages.map((message) => {
+                const displayText = message.text || message.fullText || "";
+                if (!displayText && !message.isStreaming) return null;
+                return (
+                  <div key={message.timestamp} className={`flex flex-col ${message.sender === "User" ? "items-end" : "items-start"}`}>
+                    <div className={`max-w-[85%] px-3.5 py-2.5 ${message.sender === "AI" ? "bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm text-gray-200" : "bg-blue-600/80 rounded-2xl rounded-tr-sm text-white"}`}>
+                      {renderMessageContent(message)}
+                    </div>
+                    <span className="text-[11px] text-gray-500 mt-1 px-1">{formatTime(message.timestamp)}</span>
                   </div>
-                  <span className="text-[11px] text-gray-500 mt-1 px-1">{formatTime(message.timestamp)}</span>
-                </div>
-              ))}
+                );
+              })}
 
               {showSuggestions && (
                 <div className="grid grid-cols-2 gap-2 pt-2 pb-1">
