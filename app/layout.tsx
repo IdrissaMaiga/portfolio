@@ -51,6 +51,7 @@ export const metadata: Metadata = {
     title: "Idrissa Maiga | Full-Stack Engineer",
     description:
       "Full-Stack Engineer building scalable applications with Java, TypeScript, and AI. Based in Budapest.",
+    images: [{ url: "/logos/id_.jpg", width: 400, height: 400, alt: "Idrissa Maiga" }],
   },
   twitter: {
     card: "summary_large_image",
