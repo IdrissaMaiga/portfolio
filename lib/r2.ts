@@ -5,7 +5,7 @@ const PUBLIC_URL = "https://pub-5dbae7ae21f345449868f710152b690e.r2.dev";
 
 export async function uploadToR2(
   key: string,
-  body: Buffer | Uint8Array,
+  body: Buffer | Uint8Array | string,
   contentType: string = "image/png"
 ): Promise<string> {
   const res = await fetch(
@@ -26,6 +26,13 @@ export async function uploadToR2(
   }
 
   return `${PUBLIC_URL}/${key}`;
+}
+
+export async function readFromR2(key: string): Promise<string | null> {
+  const url = `${PUBLIC_URL}/${key}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) return null;
+  return res.text();
 }
 
 export async function deleteFromR2(key: string): Promise<void> {

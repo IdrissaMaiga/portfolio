@@ -73,9 +73,9 @@ Certifications: HÖOK SHMN Mentor Camp 2025, INDUSAC Co-Creation Certificate, Sp
 Interests: AI development, cloud technologies, algorithmic challenges (LeetCode), building scalable solutions
 `;
 
-function getBlogContext(): string {
+async function getBlogContext(): Promise<string> {
   try {
-    const posts = getAllPosts();
+    const posts = await getAllPosts();
     if (posts.length === 0) return "\nBlog: No posts published yet.";
     return "\nBlog Posts:\n" + posts.map(p =>
       `- "${p.title}" (${p.date}) - ${p.description} [Tags: ${p.tags.join(", ")}] [URL: /blog/${p.slug}]\n  Content summary: ${p.content.slice(0, 500).replace(/[#*\n]+/g, " ").trim()}...`
@@ -265,7 +265,7 @@ export async function POST(req: NextRequest) {
           contents: [
             {
               role: "user",
-              parts: [{ text: PORTFOLIO_CONTEXT + getBlogContext() }],
+              parts: [{ text: PORTFOLIO_CONTEXT + await getBlogContext() }],
             },
             {
               role: "model",
@@ -394,7 +394,7 @@ export async function POST(req: NextRequest) {
             fallbackText = `Here are Idrissa's key achievements and metrics.`;
             break;
           case "get_blog_posts": {
-            const posts = getAllPosts();
+            const posts = await getAllPosts();
             if (posts.length > 0) {
               fallbackText = `Idrissa has ${posts.length} blog post${posts.length > 1 ? "s" : ""}:\n\n` +
                 posts.map(p => `**${p.title}** (${p.date})\n${p.description}\nTags: ${p.tags.join(", ")}`).join("\n\n");

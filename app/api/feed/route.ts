@@ -5,7 +5,7 @@ import { getAllPosts } from '@/lib/blog';
 
 export async function GET() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://idrissamaiga.iditechs.com';
-  const posts = getAllPosts();
+  const posts = await getAllPosts();
 
   const feed = new Feed({
     title: 'Idrissa Maiga — Blog',
@@ -38,7 +38,7 @@ export async function GET() {
           link: siteUrl,
         },
       ],
-      ...(post.image && { image: `${siteUrl}${post.image}` }),
+      ...(post.image && { image: post.image.startsWith("http") ? post.image : `${siteUrl}${post.image}` }),
     });
   }
 

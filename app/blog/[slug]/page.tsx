@@ -2,25 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getPostBySlug, getPostSlugs } from "@/lib/blog";
-
-export const dynamic = "force-dynamic";
+import { getPostBySlug } from "@/lib/blog";
 import { components } from "@/components/blog/mdx-components";
 import BlogHeader from "@/components/blog/blog-header";
 import { FiArrowLeft } from "react-icons/fi";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
-/* ---------- Static params for SSG ---------- */
-export function generateStaticParams() {
-  return getPostSlugs().map((slug) => ({ slug }));
-}
-
-/* ---------- Dynamic metadata ---------- */
-export function generateMetadata({ params }: PageProps): Metadata {
-  const post = getPostBySlug(params.slug);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
   if (!post) return { title: "Post Not Found" };
 
   return {
@@ -43,9 +38,9 @@ export function generateMetadata({ params }: PageProps): Metadata {
   };
 }
 
-/* ---------- Page ---------- */
-export default function BlogPostPage({ params }: PageProps) {
-  const post = getPostBySlug(params.slug);
+export default async function BlogPostPage({ params }: PageProps) {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
   if (!post) notFound();
 
   return (
