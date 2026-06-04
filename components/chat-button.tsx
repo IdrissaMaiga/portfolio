@@ -21,103 +21,105 @@ const suggestions = [
 ];
 
 export default function ChatButton() {
-  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
-  const [isMinimized, setIsMinimized] = useState<boolean>(false);
-  const [userMessage, setUserMessage] = useState<string>("");
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [userMessage, setUserMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    {
-      text: "Hello! I'm Idrissa's AI assistant. Ask me anything about his work, skills, or projects.",
-      sender: "AI",
-      timestamp: Date.now(),
-    },
+    { text: "Hello! I'm Idrissa's AI assistant. Ask me anything about his work, skills, or projects.", sender: "AI", timestamp: Date.now() },
   ]);
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [hasUnreadMessage, setHasUnreadMessage] = useState<boolean>(true);
-  const [isListening, setIsListening] = useState<boolean>(false);
-  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [hasUnreadMessage, setHasUnreadMessage] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
-
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const chatHistory = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const chatHistory = useRef<HTMLDivElement>(null);
   const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isChatOpenRef = useRef(isChatOpen);
+  const voiceEnabledRef = useRef(voiceEnabled);
+  const isStreamingRef = useRef(false);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    isChatOpenRef.current = isChatOpen;
-  }, [isChatOpen]);
+  useEffect(() => { isChatOpenRef.current = isChatOpen; }, [isChatOpen]);
+  useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
 
+  // Load messages from localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const savedMessages = localStorage.getItem("chatMessages");
-    if (savedMessages) {
-      try {
-        setMessages(JSON.parse(savedMessages));
-      } catch (e) {
-        console.error("Failed to parse saved messages", e);
-      }
+    const saved = localStorage.getItem("chatMessages");
+    if (saved) {
+      try { setMessages(JSON.parse(saved)); } catch { /* ignore corrupt data */ }
     }
   }, []);
 
+  // Debounced save to localStorage (not on every streaming char)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const completedMessages = messages.map((msg) => ({
-        ...msg,
-        text: msg.fullText || msg.text,
-        isStreaming: false,
-        fullText: undefined,
-      }));
-      localStorage.setItem("chatMessages", JSON.stringify(completedMessages));
-    }
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const completed = messages.map((msg) => ({
+          ...msg,
+          text: msg.fullText || msg.text,
+          isStreaming: false,
+          fullText: undefined,
+        }));
+        localStorage.setItem("chatMessages", JSON.stringify(completed));
+      }
+    }, 500);
   }, [messages]);
 
+  // Scroll to bottom (debounced during streaming)
+  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, isStreamingRef.current ? 200 : 0);
   }, [messages]);
 
   useEffect(() => {
     if (isChatOpen && !isMinimized) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 300);
+      setTimeout(() => inputRef.current?.focus(), 300);
       setHasUnreadMessage(false);
     }
   }, [isChatOpen, isMinimized]);
 
   useEffect(() => {
     return () => {
-      if (streamingTimerRef.current) {
-        clearTimeout(streamingTimerRef.current);
-        streamingTimerRef.current = null;
-      }
+      if (streamingTimerRef.current) clearTimeout(streamingTimerRef.current);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
     };
   }, []);
 
+  // Voice input
   const startListening = () => {
     if (typeof window === "undefined") return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
 
-    const recognition = new SpeechRecognition();
+    const recognition = new SR();
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = "en-US";
+    recognition.maxAlternatives = 1;
 
+    let handled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript?.trim();
-      if (transcript) {
-        sendMessage(transcript);
-      }
+      if (handled) return;
+      handled = true;
+      const transcript = event.results[0]?.[0]?.transcript?.trim();
+      if (transcript) sendMessage(transcript);
       setIsListening(false);
     };
 
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => { setIsListening(false); };
+    recognition.onend = () => { setIsListening(false); };
 
     recognitionRef.current = recognition;
     recognition.start();
@@ -129,126 +131,101 @@ export default function ChatButton() {
     setIsListening(false);
   };
 
-  const speakText = (text: string) => {
-    if (!voiceEnabled || typeof window === "undefined" || !window.speechSynthesis) return;
+  // Voice output - speaks complete text ONCE after streaming finishes
+  const speakText = useCallback((text: string) => {
+    if (!voiceEnabledRef.current || typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    const clean = text.replace(/```[\s\S]*?```/g, "code block").replace(/[*_#`]/g, "");
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.1;
-    utterance.pitch = 1.0;
-    utterance.volume = 0.8;
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v => v.lang.startsWith("en") && v.name.includes("Google")) || voices.find(v => v.lang.startsWith("en"));
-    if (preferred) utterance.voice = preferred;
-    window.speechSynthesis.speak(utterance);
-  };
 
-  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+    const clean = text.replace(/```[\s\S]*?```/g, "code block").replace(/[*_#`]/g, "").replace(/\n+/g, ". ");
+
+    // Chrome bug: long utterances get stuck. Split into chunks.
+    const chunks = clean.match(/.{1,200}[.!?,;:]?\s*/g) || [clean];
+
+    chunks.forEach((chunk, i) => {
+      const utterance = new SpeechSynthesisUtterance(chunk.trim());
+      utterance.rate = 1.1;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;
+      if (i === 0) {
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = voices.find(v => v.lang.startsWith("en") && v.name.includes("Google")) || voices.find(v => v.lang.startsWith("en"));
+        if (preferred) utterance.voice = preferred;
+      }
+      window.speechSynthesis.speak(utterance);
+    });
+  }, []);
+
+  const adjustTextareaHeight = (el: HTMLTextAreaElement) => {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   };
 
   const toggleChat = () => {
-    if (isChatOpen) {
-      setIsChatOpen(false);
-      setIsMinimized(false);
-    } else {
-      setIsChatOpen(true);
-      setIsMinimized(false);
-    }
+    if (isChatOpen) { setIsChatOpen(false); setIsMinimized(false); }
+    else { setIsChatOpen(true); setIsMinimized(false); }
   };
 
-  const handleMinimize = () => {
-    setIsMinimized(true);
-    setIsChatOpen(false);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setUserMessage(e.target.value);
-    adjustTextareaHeight(e.target);
-  };
+  const handleMinimize = () => { setIsMinimized(true); setIsChatOpen(false); };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(userMessage); }
   };
 
-  const formatTime = (timestamp: number): string => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
+  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+  // Stream text character by character
   const streamText = useCallback((fullText: string, messageIndex: number) => {
-    let currentIndex = 0;
-    const streamingSpeed = 30;
-    const punctuationPause = 150;
+    let idx = 0;
+    isStreamingRef.current = true;
 
-    const streamNextChar = () => {
-      if (currentIndex <= fullText.length) {
+    const tick = () => {
+      if (idx <= fullText.length) {
         setMessages((prev) => {
           const updated = [...prev];
           if (!updated[messageIndex]) return prev;
           updated[messageIndex] = {
             ...updated[messageIndex],
-            text: fullText.substring(0, currentIndex),
-            fullText: fullText,
-            isStreaming: currentIndex < fullText.length,
+            text: fullText.substring(0, idx),
+            fullText,
+            isStreaming: idx < fullText.length,
           };
           return updated;
         });
-
-        currentIndex++;
-        const delay =
-          currentIndex > 1 && /[.,!?;:]/.test(fullText[currentIndex - 2])
-            ? punctuationPause
-            : streamingSpeed;
-        streamingTimerRef.current = setTimeout(streamNextChar, delay);
+        idx++;
+        const delay = idx > 1 && /[.,!?;:]/.test(fullText[idx - 2]) ? 120 : 25;
+        streamingTimerRef.current = setTimeout(tick, delay);
       } else {
         streamingTimerRef.current = null;
+        isStreamingRef.current = false;
         setMessages((prev) => {
           const updated = [...prev];
           if (!updated[messageIndex]) return prev;
-          updated[messageIndex] = {
-            ...updated[messageIndex],
-            isStreaming: false,
-          };
+          updated[messageIndex] = { ...updated[messageIndex], isStreaming: false };
           return updated;
         });
         speakText(fullText);
       }
     };
 
-    streamNextChar();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [voiceEnabled]);
-
-  const handleSuggestionClick = (suggestion: string) => {
-    sendMessage(suggestion);
-  };
+    tick();
+  }, [speakText]);
 
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
+    const trimmed = text.trim();
+    if (!trimmed || isTyping) return;
 
     if (streamingTimerRef.current) {
       clearTimeout(streamingTimerRef.current);
       streamingTimerRef.current = null;
+      isStreamingRef.current = false;
     }
+    window.speechSynthesis?.cancel();
 
-    const userMsg: Message = {
-      text: text.trim(),
-      sender: "User",
-      timestamp: Date.now(),
-    };
-
+    const userMsg: Message = { text: trimmed, sender: "User", timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setUserMessage("");
     setIsTyping(true);
-
-    if (inputRef.current) {
-      inputRef.current.style.height = "auto";
-    }
+    if (inputRef.current) inputRef.current.style.height = "auto";
 
     try {
       const controller = new AbortController();
@@ -259,107 +236,56 @@ export default function ChatButton() {
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
         body: JSON.stringify({
-          userCommand: text.trim(),
-          history: messages.slice(-10).map(m => ({
-            sender: m.sender,
-            text: m.fullText || m.text,
-          })),
+          userCommand: trimmed,
+          history: messages.slice(-8).map(m => ({ sender: m.sender, text: m.fullText || m.text })),
         }),
       });
-
       clearTimeout(timeout);
 
-      if (!response.ok) {
-        throw new Error(`AI request failed (${response.status})`);
-      }
-
+      if (!response.ok) throw new Error(`${response.status}`);
       const data = await response.json();
 
-      const aiText =
-        data.response ||
-        (data.action ? "Done! I've performed that action for you." : "I'm here to help! Ask me about Idrissa's projects, skills, or experience.");
+      const aiText = data.response || (data.action ? "Done!" : "How can I help?");
 
       if (data.action) {
         const navActions = ["navigate_to_section", "show_project", "get_contact_info", "highlight_skill", "show_stats"];
         if (navActions.includes(data.action.type)) {
-          setTimeout(() => {
-            setIsChatOpen(false);
-            setIsMinimized(true);
-          }, 800);
+          setTimeout(() => { setIsChatOpen(false); setIsMinimized(true); }, 800);
         }
-
         setTimeout(() => {
           try {
-            window.dispatchEvent(
-              new CustomEvent("portfolio-action", { detail: data.action })
-            );
-          } catch (err) {
-            console.error("Action dispatch failed:", err);
-          }
+            window.dispatchEvent(new CustomEvent("portfolio-action", { detail: data.action }));
+          } catch (err) { console.error("Action dispatch failed:", err); }
         }, 400);
       }
 
-      const containsCode =
-        text.toLowerCase().includes("code") ||
-        text.toLowerCase().includes("example") ||
-        aiText.includes("```");
+      const containsCode = trimmed.toLowerCase().includes("code") || trimmed.toLowerCase().includes("example") || aiText.includes("```");
 
       setMessages(prev => {
-        const aiResponseIndex = prev.length;
-        const updated = [
-          ...prev,
-          {
-            text: "",
-            fullText: aiText,
-            sender: "AI" as const,
-            timestamp: Date.now(),
-            code: containsCode,
-            isStreaming: true,
-          },
-        ];
-
-        setTimeout(() => {
-          streamText(aiText, aiResponseIndex);
-        }, 500);
-
+        const aiIdx = prev.length;
+        const updated = [...prev, {
+          text: "", fullText: aiText, sender: "AI" as const,
+          timestamp: Date.now(), code: containsCode, isStreaming: true,
+        }];
+        setTimeout(() => streamText(aiText, aiIdx), 300);
         return updated;
       });
 
-      if (!isChatOpenRef.current) {
-        setHasUnreadMessage(true);
-      }
+      if (!isChatOpenRef.current) setHasUnreadMessage(true);
     } catch (error) {
-      const errorMsg = error instanceof Error && error.name === "AbortError"
+      const msg = error instanceof Error && error.name === "AbortError"
         ? "Request timed out. Please try again."
-        : "Sorry, I encountered an error. Please try again.";
-
-      console.error("Chat error:", error);
-
-      setMessages(prev => [
-        ...prev,
-        {
-          text: errorMsg,
-          sender: "AI",
-          timestamp: Date.now(),
-        },
-      ]);
-
-      if (!isChatOpenRef.current) {
-        setHasUnreadMessage(true);
-      }
+        : "Something went wrong. Please try again.";
+      setMessages(prev => [...prev, { text: msg, sender: "AI", timestamp: Date.now() }]);
+      if (!isChatOpenRef.current) setHasUnreadMessage(true);
     } finally {
       setIsTyping(false);
     }
   };
 
-  const handleSendMessage = () => {
-    sendMessage(userMessage);
-  };
-
   const renderMessageContent = (message: Message) => {
     const textToRender = message.text;
-
-    const cursorElement = message.isStreaming ? (
+    const cursor = message.isStreaming ? (
       <span className="inline-block w-0.5 h-4 ml-0.5 bg-blue-400 animate-blink align-middle" />
     ) : null;
 
@@ -373,9 +299,7 @@ export default function ChatButton() {
                 const [, lang, code] = match;
                 return (
                   <div key={i} className="my-2">
-                    <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-1 font-medium">
-                      {lang}
-                    </div>
+                    <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-1 font-medium">{lang}</div>
                     <div className="bg-black/40 text-gray-200 p-3 rounded-lg font-mono text-xs overflow-x-auto border border-white/[0.06]">
                       {code.replace(/</g, "<").replace(/>/g, ">")}
                     </div>
@@ -386,7 +310,7 @@ export default function ChatButton() {
             }
             return <span key={i}>{part}</span>;
           })}
-          {cursorElement}
+          {cursor}
         </div>
       );
     }
@@ -394,7 +318,7 @@ export default function ChatButton() {
     return (
       <div className="whitespace-pre-wrap text-sm leading-relaxed">
         {textToRender}
-        {cursorElement}
+        {cursor}
       </div>
     );
   };
@@ -403,7 +327,6 @@ export default function ChatButton() {
 
   return (
     <>
-      {/* Chat Toggle Button */}
       <AnimatePresence>
         {!isChatOpen && (
           <motion.button
@@ -418,7 +341,6 @@ export default function ChatButton() {
           >
             <FiMessageCircle className="w-[18px] h-[18px]" />
             <span>Ask AI</span>
-
             {hasUnreadMessage && (
               <>
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -432,7 +354,6 @@ export default function ChatButton() {
         )}
       </AnimatePresence>
 
-      {/* Chat Panel */}
       <AnimatePresence>
         {isChatOpen && (
           <motion.div
@@ -450,66 +371,29 @@ export default function ChatButton() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60" />
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
                 </span>
-                <span className="text-white font-semibold text-sm tracking-tight">
-                  Idrissa&apos;s AI Assistant
-                </span>
+                <span className="text-white font-semibold text-sm tracking-tight">Idrissa&apos;s AI</span>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={handleMinimize}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors"
-                  aria-label="Minimize chat"
-                >
-                  <FiMinus className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={toggleChat}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors"
-                  aria-label="Close chat"
-                >
-                  <FiX className="w-4 h-4" />
-                </button>
+                <button onClick={handleMinimize} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors" aria-label="Minimize"><FiMinus className="w-4 h-4" /></button>
+                <button onClick={toggleChat} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors" aria-label="Close"><FiX className="w-4 h-4" /></button>
               </div>
             </div>
 
-            {/* Messages Area */}
-            <div
-              className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-              ref={chatHistory}
-              style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
-            >
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" ref={chatHistory} style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
               {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex flex-col ${
-                    message.sender === "User" ? "items-end" : "items-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[85%] px-3.5 py-2.5 ${
-                      message.sender === "AI"
-                        ? "bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm text-gray-200"
-                        : "bg-blue-600/80 rounded-2xl rounded-tr-sm text-white"
-                    }`}
-                  >
+                <div key={index} className={`flex flex-col ${message.sender === "User" ? "items-end" : "items-start"}`}>
+                  <div className={`max-w-[85%] px-3.5 py-2.5 ${message.sender === "AI" ? "bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm text-gray-200" : "bg-blue-600/80 rounded-2xl rounded-tr-sm text-white"}`}>
                     {renderMessageContent(message)}
                   </div>
-                  <span className="text-[11px] text-gray-500 mt-1 px-1">
-                    {formatTime(message.timestamp)}
-                  </span>
+                  <span className="text-[11px] text-gray-500 mt-1 px-1">{formatTime(message.timestamp)}</span>
                 </div>
               ))}
 
               {showSuggestions && (
                 <div className="grid grid-cols-2 gap-2 pt-2 pb-1">
                   {suggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSuggestionClick(s)}
-                      className="text-xs text-left px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-gray-300 hover:bg-blue-500/20 hover:border-blue-500/30 hover:text-blue-200 transition-all duration-200 cursor-pointer"
-                    >
-                      {s}
-                    </button>
+                    <button key={i} onClick={() => sendMessage(s)} className="text-xs text-left px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-gray-300 hover:bg-blue-500/20 hover:border-blue-500/30 hover:text-blue-200 transition-all duration-200 cursor-pointer">{s}</button>
                   ))}
                 </div>
               )}
@@ -525,20 +409,15 @@ export default function ChatButton() {
                   </div>
                 </div>
               )}
-
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
+            {/* Input */}
             <div className="shrink-0 px-3 py-3 border-t border-white/[0.08] bg-white/[0.02]">
               <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-1.5">
                 <button
                   onClick={isListening ? stopListening : startListening}
-                  className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
-                    isListening
-                      ? "bg-red-500/80 text-white animate-pulse"
-                      : "bg-white/[0.06] text-gray-400 hover:text-blue-400 hover:bg-blue-500/20"
-                  }`}
+                  className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer ${isListening ? "bg-red-500/80 text-white animate-pulse" : "bg-white/[0.06] text-gray-400 hover:text-blue-400 hover:bg-blue-500/20"}`}
                   aria-label={isListening ? "Stop listening" : "Voice input"}
                 >
                   {isListening ? <FiMicOff className="w-3.5 h-3.5" /> : <FiMic className="w-3.5 h-3.5" />}
@@ -546,7 +425,7 @@ export default function ChatButton() {
                 <textarea
                   ref={inputRef}
                   value={userMessage}
-                  onChange={handleInputChange}
+                  onChange={(e) => { setUserMessage(e.target.value); adjustTextareaHeight(e.target); }}
                   onKeyDown={handleKeyDown}
                   placeholder={isListening ? "Listening..." : "Ask me anything about Idrissa..."}
                   rows={1}
@@ -554,7 +433,7 @@ export default function ChatButton() {
                   style={{ minHeight: "32px", maxHeight: "120px" }}
                 />
                 <button
-                  onClick={handleSendMessage}
+                  onClick={() => sendMessage(userMessage)}
                   disabled={!userMessage.trim() || isTyping}
                   className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-30 disabled:hover:bg-blue-600 cursor-pointer"
                   aria-label="Send message"
@@ -564,17 +443,13 @@ export default function ChatButton() {
               </div>
               <div className="flex items-center justify-between mt-1.5 px-1">
                 <button
-                  onClick={() => { setVoiceEnabled(!voiceEnabled); if (voiceEnabled) window.speechSynthesis?.cancel(); }}
-                  className={`flex items-center gap-1 text-[10px] cursor-pointer transition-colors ${
-                    voiceEnabled ? "text-blue-400" : "text-gray-600 hover:text-gray-400"
-                  }`}
+                  onClick={() => { setVoiceEnabled(v => !v); if (voiceEnabled) window.speechSynthesis?.cancel(); }}
+                  className={`flex items-center gap-1 text-[10px] cursor-pointer transition-colors ${voiceEnabled ? "text-blue-400" : "text-gray-600 hover:text-gray-400"}`}
                 >
                   {voiceEnabled ? <FiVolume2 className="w-3 h-3" /> : <FiVolumeX className="w-3 h-3" />}
                   {voiceEnabled ? "Voice on" : "Voice off"}
                 </button>
-                <span className="text-[10px] text-gray-600">
-                  Enter to send · Shift+Enter new line
-                </span>
+                <span className="text-[10px] text-gray-600">Enter to send</span>
               </div>
             </div>
           </motion.div>
@@ -582,13 +457,8 @@ export default function ChatButton() {
       </AnimatePresence>
 
       <style jsx global>{`
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-        .animate-blink {
-          animation: blink 0.8s steps(2, start) infinite;
-        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .animate-blink { animation: blink 0.8s steps(2, start) infinite; }
       `}</style>
     </>
   );
