@@ -203,7 +203,12 @@ async function callGemini(
     contents: messages,
     tools: [{ functionDeclarations: tools }],
     tool_config: { function_calling_config: { mode: "AUTO" } },
-    generationConfig: { temperature: 0.3, maxOutputTokens: 1024, topP: 0.95 },
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 1024,
+      topP: 0.95,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
   };
 
   const res = await fetch(
@@ -245,7 +250,7 @@ async function callGemini(
             { role: "user", parts: lastUserMsg?.parts || [{ text: "hello" }] },
           ],
           tools: [{ functionDeclarations: tools }],
-          generationConfig: { temperature: 0.5, maxOutputTokens: 512 },
+          generationConfig: { temperature: 0.5, maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } },
         }),
       }
     );
