@@ -73,7 +73,7 @@ export default function HeroSection() {
         className="relative z-[4] container mx-auto px-4 md:px-6 min-h-screen flex items-center pt-20 pointer-events-none"
       >
         <motion.div
-          className="w-full md:w-3/5 max-w-2xl pointer-events-auto"
+          className="w-full md:w-2/3 lg:w-3/5 max-w-2xl pointer-events-auto"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.5 }}

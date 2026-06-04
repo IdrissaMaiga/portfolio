@@ -54,7 +54,7 @@ export default async function BlogPage() {
 
         {/* Posts grid or empty state */}
         {posts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
             {posts.map((post, index) => (
               <BlogCard key={post.slug} post={post} index={index} />
             ))}

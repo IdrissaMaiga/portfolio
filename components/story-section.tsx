@@ -142,7 +142,7 @@ export default function StorySection() {
         <InteractiveScene formation="dna" color="#22d3ee" height="250px" style="bio" className="mb-10 rounded-2xl overflow-hidden border border-white/[0.06]" />
 
         {/* ---- Two-column layout ---- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* LEFT: Personal Info Card */}
           <motion.div
             initial={{ x: -80, opacity: 0 }}

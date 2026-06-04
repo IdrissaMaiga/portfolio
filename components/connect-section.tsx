@@ -261,9 +261,9 @@ export default function ConnectSection() {
 
           <InteractiveScene formation="ring" color="#f59e0b" height="200px" style="connect" className="mb-10 rounded-2xl overflow-hidden border border-white/[0.06]" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 sm:gap-8 md:gap-10">
             {/* ---- Contact information card ---- */}
-            <div className="lg:col-span-2">
+            <div className="md:col-span-2">
               <div className="h-full flex flex-col rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/[0.08] p-5 sm:p-7">
                 <h3 className="text-lg sm:text-xl font-bold mb-6 sm:mb-8 flex items-center text-white">
                   <span className="text-amber-400 mr-1.5 text-base sm:text-lg font-mono">
@@ -356,7 +356,7 @@ export default function ConnectSection() {
             </div>
 
             {/* ---- Contact form card ---- */}
-            <div className="lg:col-span-3">
+            <div className="md:col-span-3">
               <div className="h-full relative rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/[0.08] p-5 sm:p-7 overflow-hidden">
                 {/* Code decorations */}
                 <div className="absolute top-2 right-5 sm:right-7 text-white/[0.15] font-mono text-xs select-none">

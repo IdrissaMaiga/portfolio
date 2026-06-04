@@ -158,14 +158,14 @@ export default function InsightsSection() {
         {/* ---- Content: Blog Cards + GitHub Widget ---- */}
         <InteractiveScene formation="wave" color="#818cf8" height="200px" style="blog" className="mb-10 rounded-2xl overflow-hidden border border-white/[0.06]" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {/* Blog cards -- 2/3 width */}
           <motion.div
             initial={{ x: -60, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true, margin: "-100px" }}
-            className="lg:col-span-2"
+            className="md:col-span-2"
           >
             {error && posts.length === 0 ? (
               <div className="text-center py-16">

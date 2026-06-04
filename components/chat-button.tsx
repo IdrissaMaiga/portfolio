@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiMessageCircle, FiSend, FiX, FiMinus, FiMic, FiMicOff, FiVolume2, FiVolumeX } from "react-icons/fi";
 
@@ -42,11 +42,14 @@ export default function ChatButton() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const chatHistory = useRef<HTMLDivElement | null>(null);
   const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isChatOpenRef = useRef(isChatOpen);
 
-  // Load messages from localStorage on mount
+  useEffect(() => {
+    isChatOpenRef.current = isChatOpen;
+  }, [isChatOpen]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const savedMessages = localStorage.getItem("chatMessages");
     if (savedMessages) {
       try {
@@ -57,7 +60,6 @@ export default function ChatButton() {
     }
   }, []);
 
-  // Save messages to localStorage when they change
   useEffect(() => {
     if (typeof window !== "undefined") {
       const completedMessages = messages.map((msg) => ({
@@ -70,14 +72,12 @@ export default function ChatButton() {
     }
   }, [messages]);
 
-  // Scroll to the latest message
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Focus the input when chat is opened
   useEffect(() => {
     if (isChatOpen && !isMinimized) {
       setTimeout(() => {
@@ -87,16 +87,15 @@ export default function ChatButton() {
     }
   }, [isChatOpen, isMinimized]);
 
-  // Clean up streaming timer on unmount
   useEffect(() => {
     return () => {
       if (streamingTimerRef.current) {
         clearTimeout(streamingTimerRef.current);
+        streamingTimerRef.current = null;
       }
     };
   }, []);
 
-  // Voice input (Web Speech API)
   const startListening = () => {
     if (typeof window === "undefined") return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,7 +109,7 @@ export default function ChatButton() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
+      const transcript = event.results[0][0].transcript?.trim();
       if (transcript) {
         sendMessage(transcript);
       }
@@ -130,7 +129,6 @@ export default function ChatButton() {
     setIsListening(false);
   };
 
-  // Voice output (Web Speech Synthesis)
   const speakText = (text: string) => {
     if (!voiceEnabled || typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
@@ -145,7 +143,6 @@ export default function ChatButton() {
     window.speechSynthesis.speak(utterance);
   };
 
-  // Adjust textarea height based on content
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
@@ -178,29 +175,28 @@ export default function ChatButton() {
     }
   };
 
-  // Format timestamp
   const formatTime = (timestamp: number): string => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Stream text character by character
-  const streamText = (fullText: string, messageIndex: number) => {
+  const streamText = useCallback((fullText: string, messageIndex: number) => {
     let currentIndex = 0;
     const streamingSpeed = 30;
     const punctuationPause = 150;
 
     const streamNextChar = () => {
       if (currentIndex <= fullText.length) {
-        setMessages((prevMessages) => {
-          const updatedMessages = [...prevMessages];
-          updatedMessages[messageIndex] = {
-            ...updatedMessages[messageIndex],
+        setMessages((prev) => {
+          const updated = [...prev];
+          if (!updated[messageIndex]) return prev;
+          updated[messageIndex] = {
+            ...updated[messageIndex],
             text: fullText.substring(0, currentIndex),
             fullText: fullText,
             isStreaming: currentIndex < fullText.length,
           };
-          return updatedMessages;
+          return updated;
         });
 
         currentIndex++;
@@ -210,20 +206,23 @@ export default function ChatButton() {
             : streamingSpeed;
         streamingTimerRef.current = setTimeout(streamNextChar, delay);
       } else {
-        setMessages((prevMessages) => {
-          const updatedMessages = [...prevMessages];
-          updatedMessages[messageIndex] = {
-            ...updatedMessages[messageIndex],
+        streamingTimerRef.current = null;
+        setMessages((prev) => {
+          const updated = [...prev];
+          if (!updated[messageIndex]) return prev;
+          updated[messageIndex] = {
+            ...updated[messageIndex],
             isStreaming: false,
           };
-          return updatedMessages;
+          return updated;
         });
         speakText(fullText);
       }
     };
 
     streamNextChar();
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceEnabled]);
 
   const handleSuggestionClick = (suggestion: string) => {
     sendMessage(suggestion);
@@ -232,14 +231,18 @@ export default function ChatButton() {
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
 
+    if (streamingTimerRef.current) {
+      clearTimeout(streamingTimerRef.current);
+      streamingTimerRef.current = null;
+    }
+
     const userMsg: Message = {
-      text: text,
+      text: text.trim(),
       sender: "User",
       timestamp: Date.now(),
     };
 
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    setMessages(prev => [...prev, userMsg]);
     setUserMessage("");
     setIsTyping(true);
 
@@ -248,33 +251,35 @@ export default function ChatButton() {
     }
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000);
+
       const response = await fetch("/api/ai", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
-          userCommand: text,
-          history: newMessages.slice(-10).map(m => ({
+          userCommand: text.trim(),
+          history: messages.slice(-10).map(m => ({
             sender: m.sender,
             text: m.fullText || m.text,
           })),
         }),
       });
 
+      clearTimeout(timeout);
+
       if (!response.ok) {
-        throw new Error("Failed to get AI response");
+        throw new Error(`AI request failed (${response.status})`);
       }
 
       const data = await response.json();
 
-      if (!data.response && !data.action) {
-        throw new Error("Invalid response format");
-      }
+      const aiText =
+        data.response ||
+        (data.action ? "Done! I've performed that action for you." : "I'm here to help! Ask me about Idrissa's projects, skills, or experience.");
 
-      // Dispatch portfolio action if the AI called a tool
       if (data.action) {
-        // Auto-minimize chat so user can see the action happening
         const navActions = ["navigate_to_section", "show_project", "get_contact_info", "highlight_skill", "show_stats"];
         if (navActions.includes(data.action.type)) {
           setTimeout(() => {
@@ -283,57 +288,63 @@ export default function ChatButton() {
           }, 800);
         }
 
-        // Small delay so chat shows the response first, then acts
         setTimeout(() => {
-          window.dispatchEvent(
-            new CustomEvent("portfolio-action", {
-              detail: data.action,
-            })
-          );
+          try {
+            window.dispatchEvent(
+              new CustomEvent("portfolio-action", { detail: data.action })
+            );
+          } catch (err) {
+            console.error("Action dispatch failed:", err);
+          }
         }, 400);
       }
-
-      const aiText =
-        data.response ||
-        (data.action ? "Done! I've performed that action for you." : "");
 
       const containsCode =
         text.toLowerCase().includes("code") ||
         text.toLowerCase().includes("example") ||
         aiText.includes("```");
 
-      const aiResponseIndex = newMessages.length;
-      setMessages([
-        ...newMessages,
-        {
-          text: "",
-          fullText: aiText,
-          sender: "AI",
-          timestamp: Date.now(),
-          code: containsCode,
-          isStreaming: true,
-        },
-      ]);
+      setMessages(prev => {
+        const aiResponseIndex = prev.length;
+        const updated = [
+          ...prev,
+          {
+            text: "",
+            fullText: aiText,
+            sender: "AI" as const,
+            timestamp: Date.now(),
+            code: containsCode,
+            isStreaming: true,
+          },
+        ];
 
-      if (!isChatOpen) {
+        setTimeout(() => {
+          streamText(aiText, aiResponseIndex);
+        }, 500);
+
+        return updated;
+      });
+
+      if (!isChatOpenRef.current) {
         setHasUnreadMessage(true);
       }
-
-      setTimeout(() => {
-        streamText(aiText, aiResponseIndex);
-      }, 500);
     } catch (error) {
-      console.error("Error processing message:", error);
-      setMessages([
-        ...newMessages,
+      const errorMsg = error instanceof Error && error.name === "AbortError"
+        ? "Request timed out. Please try again."
+        : "Sorry, I encountered an error. Please try again.";
+
+      console.error("Chat error:", error);
+
+      setMessages(prev => [
+        ...prev,
         {
-          text: "Sorry, I encountered an error processing your request. Please try again later.",
+          text: errorMsg,
           sender: "AI",
           timestamp: Date.now(),
         },
       ]);
 
-      if (!isChatOpen) {
+      if (!isChatOpenRef.current) {
         setHasUnreadMessage(true);
       }
     } finally {
@@ -345,7 +356,6 @@ export default function ChatButton() {
     sendMessage(userMessage);
   };
 
-  // Render message content with code formatting
   const renderMessageContent = (message: Message) => {
     const textToRender = message.text;
 
@@ -409,7 +419,6 @@ export default function ChatButton() {
             <FiMessageCircle className="w-[18px] h-[18px]" />
             <span>Ask AI</span>
 
-            {/* Unread pulse glow */}
             {hasUnreadMessage && (
               <>
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -437,7 +446,6 @@ export default function ChatButton() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 bg-white/[0.05] border-b border-white/[0.08] shrink-0">
               <div className="flex items-center gap-2.5">
-                {/* Online indicator */}
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60" />
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
@@ -492,7 +500,6 @@ export default function ChatButton() {
                 </div>
               ))}
 
-              {/* Suggestion chips */}
               {showSuggestions && (
                 <div className="grid grid-cols-2 gap-2 pt-2 pb-1">
                   {suggestions.map((s, i) => (
@@ -507,23 +514,13 @@ export default function ChatButton() {
                 </div>
               )}
 
-              {/* Typing indicator */}
               {isTyping && (
                 <div className="flex flex-col items-start">
                   <div className="max-w-[85%] px-3.5 py-3 bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm">
                     <div className="flex items-center gap-1.5">
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
                   </div>
                 </div>
@@ -535,7 +532,6 @@ export default function ChatButton() {
             {/* Input Area */}
             <div className="shrink-0 px-3 py-3 border-t border-white/[0.08] bg-white/[0.02]">
               <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-1.5">
-                {/* Mic button */}
                 <button
                   onClick={isListening ? stopListening : startListening}
                   className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
@@ -585,16 +581,10 @@ export default function ChatButton() {
         )}
       </AnimatePresence>
 
-      {/* Global styles for scrollbar and cursor blink animation */}
       <style jsx global>{`
         @keyframes blink {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0;
-          }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
         }
         .animate-blink {
           animation: blink 0.8s steps(2, start) infinite;

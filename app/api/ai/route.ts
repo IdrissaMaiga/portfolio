@@ -75,13 +75,16 @@ Interests: AI development, cloud technologies, algorithmic challenges (LeetCode)
 
 async function getBlogContext(): Promise<string> {
   try {
-    const posts = await getAllPosts();
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Blog fetch timeout")), 5000)
+    );
+    const posts = await Promise.race([getAllPosts(), timeout]);
     if (posts.length === 0) return "\nBlog: No posts published yet.";
     return "\nBlog Posts:\n" + posts.map(p =>
       `- "${p.title}" (${p.date}) - ${p.description} [Tags: ${p.tags.join(", ")}] [URL: /blog/${p.slug}]\n  Content summary: ${p.content.slice(0, 500).replace(/[#*\n]+/g, " ").trim()}...`
     ).join("\n");
   } catch {
-    return "";
+    return "\nBlog: Could not load posts.";
   }
 }
 

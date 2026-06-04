@@ -467,7 +467,7 @@ export default function DetailedProjectsSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 flex items-start justify-center pt-8 pb-8 px-4 overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-8 pb-4 sm:pb-8 px-3 sm:px-4 overflow-y-auto"
             onClick={closeProject}
           >
             {/* Backdrop */}
@@ -481,7 +481,7 @@ export default function DetailedProjectsSection() {
               exit={{ opacity: 0, y: 30, scale: 0.97 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-3xl bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10 z-10 my-auto"
+              className="relative w-full max-w-2xl lg:max-w-3xl bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10 z-10 my-auto"
             >
               {/* Close button */}
               <button
