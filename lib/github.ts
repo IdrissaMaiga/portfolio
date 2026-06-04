@@ -64,7 +64,8 @@ export async function fetchGitHubActivity(): Promise<GitHubActivity> {
       followers: user.followers || 0,
       totalStars,
     };
-  } catch {
+  } catch (err) {
+    console.error("GitHub API fetch failed:", err);
     return { recentRepos: [], publicRepos: 0, followers: 0, totalStars: 0 };
   }
 }

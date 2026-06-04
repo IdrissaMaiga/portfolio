@@ -88,27 +88,29 @@ export default function InsightsSection() {
   const [posts, setPosts] = useState<PostPreview[]>([]);
   const [activity, setActivity] = useState<GitHubActivity | null>(null);
   const [ghLoading, setGhLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [blogError, setBlogError] = useState(false);
+  const [ghError, setGhError] = useState(false);
 
-  /* Data fetching */
   useEffect(() => {
-    fetch("/api/blog/recent")
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 10000);
+
+    fetch("/api/blog/recent", { signal: ctrl.signal })
       .then((r) => r.json())
       .then((data) => setPosts(data.posts || []))
-      .catch(() => {
-        setError(true);
-      });
+      .catch(() => setBlogError(true))
+      .finally(() => clearTimeout(timeout));
 
-    fetch("/api/github/activity")
+    const ghCtrl = new AbortController();
+    const ghTimeout = setTimeout(() => ghCtrl.abort(), 10000);
+
+    fetch("/api/github/activity", { signal: ghCtrl.signal })
       .then((res) => res.json())
-      .then((data) => {
-        setActivity(data);
-        setGhLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setGhLoading(false);
-      });
+      .then((data) => { setActivity(data); setGhLoading(false); })
+      .catch(() => { setGhError(true); setGhLoading(false); })
+      .finally(() => clearTimeout(ghTimeout));
+
+    return () => { ctrl.abort(); ghCtrl.abort(); };
   }, []);
 
   return (
@@ -167,7 +169,7 @@ export default function InsightsSection() {
             viewport={{ once: true, margin: "-100px" }}
             className="md:col-span-2"
           >
-            {error && posts.length === 0 ? (
+            {blogError && posts.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-sm text-gray-500">Unable to load latest posts.</p>
               </div>

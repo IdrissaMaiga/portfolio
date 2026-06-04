@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: post.title,
       description: post.description,
       type: "article",
+      url: `https://idrissamaiga.iditechs.com/blog/${slug}`,
       publishedTime: post.date,
       authors: ["Idrissa Maiga"],
       tags: post.tags,
@@ -34,6 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: "summary_large_image",
       title: post.title,
       description: post.description,
+      ...(post.image && { images: [post.image] }),
     },
   };
 }

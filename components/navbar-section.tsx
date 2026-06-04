@@ -21,11 +21,18 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
 
-  // Handle scroll events
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/blog")) {
+      setActiveSection("blog");
+    }
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       setScrolled(scrollPosition > 10);
+
+      if (window.location.pathname !== "/") return;
 
       const sectionIds = navLinks
         .filter((link) => link.href.startsWith("/#"))
@@ -92,13 +99,13 @@ export default function Navbar() {
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative ${
-                    activeSection === link.href.replace("/#", "")
+                    (link.href === "/blog" ? activeSection === "blog" : activeSection === link.href.replace("/#", ""))
                       ? "text-blue-400"
                       : "text-gray-300 hover:text-white"
                   }`}
                 >
                   {link.name}
-                  {activeSection === link.href.replace("/#", "") && (
+                  {(link.href === "/blog" ? activeSection === "blog" : activeSection === link.href.replace("/#", "")) && (
                     <motion.span
                       layoutId="activeSection"
                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400"
@@ -156,7 +163,7 @@ export default function Navbar() {
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                        activeSection === link.href.replace("/#", "")
+                        (link.href === "/blog" ? activeSection === "blog" : activeSection === link.href.replace("/#", ""))
                           ? "bg-blue-500/15 text-blue-400"
                           : "text-gray-300 hover:bg-white/5 hover:text-white"
                       }`}

@@ -24,7 +24,8 @@ async function getIndex(): Promise<BlogPostMeta[]> {
   if (!raw) return [];
   try {
     return JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    console.error("Failed to parse blog index from R2:", err);
     return [];
   }
 }
@@ -46,7 +47,8 @@ export async function getAllPosts(): Promise<BlogPost[]> {
         const data = JSON.parse(raw);
         const rt = readingTime(data.content || "");
         return { ...meta, content: data.content || "", readingTime: Math.ceil(rt.minutes) };
-      } catch {
+      } catch (err) {
+        console.error(`Failed to parse post ${meta.slug}:`, err);
         return null;
       }
     })

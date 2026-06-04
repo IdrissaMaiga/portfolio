@@ -62,6 +62,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 413 });
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
     const ext = file.name.split(".").pop() || "png";
     const key = `blog/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`;
