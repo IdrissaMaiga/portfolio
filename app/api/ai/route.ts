@@ -141,6 +141,7 @@ const TOOLS = [
     }
   },
   {
+    name: "get_blog_posts",
     description: "Fetch all blog posts with titles, dates, tags, content previews, and reading times. Call this for ANY question about Idrissa's writing, articles, blog, or published content.",
     parameters: { type: "OBJECT", properties: {} }
   },
