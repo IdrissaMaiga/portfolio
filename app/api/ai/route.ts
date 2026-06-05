@@ -11,7 +11,7 @@ type Msg = { role: "user" | "model"; parts: Part[] };
 const CLIENT_ACTIONS = new Set([
   "navigate_to_section", "show_project", "get_contact_info",
   "download_resume", "open_external_link", "compose_email",
-  "highlight_skill", "show_stats",
+  "highlight_skill", "show_stats", "open_blog_post",
 ]);
 
 const SYSTEM = `You are Idrissa's AI — the intelligent assistant on his portfolio at idrissamaiga.iditechs.com.
@@ -43,19 +43,26 @@ DATA TOOLS — call these, get results back, then answer using the data:
 - get_blog_post_content: Fetch full content of a specific post by slug.
 - send_message_to_idrissa: Send a message. Need name + email + message. Ask naturally if missing.
 
-ACTION TOOLS — use ONLY when user explicitly wants to SEE/GO/OPEN/DOWNLOAD:
+ACTION TOOLS — use when user wants to SEE/GO/OPEN/DOWNLOAD:
 - navigate_to_section (home/story/projects/skills/insights/connect)
 - show_project (horizoneurope/neptun-api/gmail-ai/trading-bot/filmu/signalapp)
+- open_blog_post — NAVIGATE to a blog post page by slug. Use this when user says "show me the post", "open it", "let me read it", "take me there"
 - highlight_skill, show_stats, get_contact_info, download_resume
 - open_external_link (github/linkedin/twitter/blog/horizoneurope)
 - compose_email
 
+CRITICAL DISTINCTION — "tell me" vs "show me":
+- "What did he write about?" → get_blog_posts (data tool) → describe posts in text
+- "Show me the post" / "open it" / "let me read it" → open_blog_post(slug) → NAVIGATE to the post
+- "Tell me about neptun-api" → Answer from context
+- "Show me neptun-api" / "open it" → show_project(neptun-api) → OPEN the modal
+- "Show me projects" → navigate_to_section(projects)
+- When user says "show me" after discussing something, ALWAYS use an action tool. Never describe again.
+
 RULES:
-- "What projects?" → Answer from context. Don't navigate.
-- "Show me projects" → navigate_to_section(projects).
-- "What has he written?" → Call get_blog_posts, answer with real data.
 - Under 200 words. Use **bold** and bullets when helpful.
-- NEVER return empty text. NEVER ask clarifying questions. Always give value.`;
+- NEVER return empty text. NEVER ask clarifying questions. Always give value.
+- When user says "show me" TWICE, you MUST call an action tool. Do not describe again.`;
 
 const CONTEXT = `IDRISSA MAIGA — Full-Stack Engineer
 
@@ -125,7 +132,15 @@ const TOOLS = [
   },
   { name: "show_stats", description: "Scroll to show metrics and achievements.", parameters: { type: "OBJECT", properties: {} } },
   {
-    name: "get_blog_posts",
+    name: "open_blog_post",
+    description: "Navigate the user to a specific blog post page. Use when user says 'show me the post', 'open that article', 'take me to the post', or 'let me read it'. This actually opens the page.",
+    parameters: {
+      type: "OBJECT",
+      properties: { slug: { type: "STRING", description: "The post slug (e.g. secure-administrative-access, network-security-fundamentals, building-neptun-api)" } },
+      required: ["slug"]
+    }
+  },
+  {
     description: "Fetch all blog posts with titles, dates, tags, content previews, and reading times. Call this for ANY question about Idrissa's writing, articles, blog, or published content.",
     parameters: { type: "OBJECT", properties: {} }
   },
@@ -315,6 +330,7 @@ export async function POST(req: NextRequest) {
           compose_email: "Opening your email client.",
           highlight_skill: `Highlighting **${action.params?.skill}** in the skills section.`,
           show_stats: "Showing Idrissa's key metrics.",
+          open_blog_post: `Opening the blog post for you.`,
           send_message_to_idrissa: "Your message has been sent to Idrissa.",
         };
         text = labels[action.type] || "Done.";

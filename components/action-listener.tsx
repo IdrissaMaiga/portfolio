@@ -87,6 +87,11 @@ export default function ActionListener() {
             if (insights) insights.scrollIntoView({ behavior: "smooth" });
             break;
           }
+          case "open_blog_post": {
+            const slug = params?.slug;
+            if (slug) window.location.href = `/blog/${slug}`;
+            break;
+          }
           case "send_message_to_idrissa": {
             fetch("/api/contact", {
               method: "POST",
