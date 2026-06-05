@@ -241,7 +241,7 @@ async function gemini(apiKey: string, messages: Msg[], tools: typeof TOOLS): Pro
     const err = await res.text();
     console.error("Gemini error:", res.status, err.slice(0, 500));
     console.error("Payload contents count:", messages.length, "tools count:", tools.length);
-    throw new Error(`Gemini ${res.status}: ${err.slice(0, 100)}`);
+    throw new Error(`Gemini ${res.status}: ${err.slice(0, 300)}`);
   }
 
   const data = await res.json();
