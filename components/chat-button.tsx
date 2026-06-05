@@ -113,22 +113,34 @@ export default function ChatButton() {
 
     const recognition = new SR();
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = "en-US";
     recognition.maxAlternatives = 1;
 
-    let handled = false;
+    let finalTranscript = "";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
-      if (handled) return;
-      handled = true;
-      const transcript = event.results[0]?.[0]?.transcript?.trim();
-      if (transcript) sendMessage(transcript);
-      setIsListening(false);
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript;
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+      if (inputRef.current) {
+        inputRef.current.value = (finalTranscript + interim).trim();
+        setUserMessage((finalTranscript + interim).trim());
+      }
     };
 
-    recognition.onerror = () => { setIsListening(false); };
-    recognition.onend = () => { setIsListening(false); };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => {
+      setIsListening(false);
+      const text = finalTranscript.trim();
+      if (text) sendMessage(text);
+    };
 
     recognitionRef.current = recognition;
     recognition.start();
@@ -177,7 +189,12 @@ export default function ChatButton() {
   const handleMinimize = () => { setIsMinimized(true); setIsChatOpen(false); };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(userMessage); }
+    if (e.nativeEvent.isComposing) return;
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      const val = inputRef.current?.value || userMessage;
+      if (val.trim()) sendMessage(val);
+    }
   };
 
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
