@@ -2,65 +2,69 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, ReactNode } from "react";
 
+const ACCENT_COLORS: Record<string, string> = {
+  blue: "rgba(59,130,246,0.2)",
+  indigo: "rgba(99,102,241,0.2)",
+  purple: "rgba(168,85,247,0.2)",
+  cyan: "rgba(6,182,212,0.2)",
+  amber: "rgba(245,158,11,0.2)",
+};
+
 interface Props {
   children: ReactNode;
-  className?: string;
+  accent?: string;
 }
 
-export default function RoomFrame({ children, className = "" }: Props) {
+export default function RoomFrame({ children, accent = "blue" }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
 
-  const topBorder = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
-  const bottomBorder = useTransform(scrollYProgress, [0.85, 1], [1, 0]);
-  const sideGlow = useTransform(scrollYProgress, [0.1, 0.3, 0.7, 0.9], [0, 0.4, 0.4, 0]);
+  const wallOpacity = useTransform(scrollYProgress, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
+  const topLine = useTransform(scrollYProgress, [0.02, 0.12], [0, 1]);
+  const bottomLine = useTransform(scrollYProgress, [0.88, 0.98], [1, 0]);
+
+  const color = ACCENT_COLORS[accent] || ACCENT_COLORS.blue;
 
   return (
-    <div ref={ref} className={`relative ${className}`}>
-      {/* Top frame edge */}
+    <div ref={ref} className="relative">
+      {/* Left wall */}
       <motion.div
-        style={{ scaleX: topBorder }}
-        className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.12] to-transparent z-10 origin-center"
+        style={{
+          opacity: wallOpacity,
+          background: `linear-gradient(to bottom, transparent, ${color}, transparent)`,
+        }}
+        className="absolute left-0 top-0 bottom-0 w-px z-20 hidden lg:block"
       />
 
-      {/* Bottom frame edge */}
+      {/* Right wall */}
       <motion.div
-        style={{ scaleX: bottomBorder }}
-        className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.12] to-transparent z-10 origin-center"
+        style={{
+          opacity: wallOpacity,
+          background: `linear-gradient(to bottom, transparent, ${color}, transparent)`,
+        }}
+        className="absolute right-0 top-0 bottom-0 w-px z-20 hidden lg:block"
       />
 
-      {/* Left side glow */}
+      {/* Top threshold */}
       <motion.div
-        style={{ opacity: sideGlow }}
-        className="absolute left-0 top-[10%] bottom-[10%] w-px bg-gradient-to-b from-transparent via-blue-500/20 to-transparent z-10"
+        style={{
+          scaleX: topLine,
+          background: `linear-gradient(to right, transparent, ${color}, transparent)`,
+        }}
+        className="absolute top-0 left-0 right-0 h-px z-20 origin-center"
       />
 
-      {/* Right side glow */}
+      {/* Bottom threshold */}
       <motion.div
-        style={{ opacity: sideGlow }}
-        className="absolute right-0 top-[10%] bottom-[10%] w-px bg-gradient-to-b from-transparent via-blue-500/20 to-transparent z-10"
+        style={{
+          scaleX: bottomLine,
+          background: `linear-gradient(to right, transparent, ${color}, transparent)`,
+        }}
+        className="absolute bottom-0 left-0 right-0 h-px z-20 origin-center"
       />
-
-      {/* Corner accents */}
-      <motion.div style={{ opacity: sideGlow }} className="absolute top-0 left-0 w-6 h-6 z-10">
-        <div className="absolute top-0 left-0 w-full h-px bg-white/[0.15]" />
-        <div className="absolute top-0 left-0 w-px h-full bg-white/[0.15]" />
-      </motion.div>
-      <motion.div style={{ opacity: sideGlow }} className="absolute top-0 right-0 w-6 h-6 z-10">
-        <div className="absolute top-0 right-0 w-full h-px bg-white/[0.15]" />
-        <div className="absolute top-0 right-0 w-px h-full bg-white/[0.15]" />
-      </motion.div>
-      <motion.div style={{ opacity: sideGlow }} className="absolute bottom-0 left-0 w-6 h-6 z-10">
-        <div className="absolute bottom-0 left-0 w-full h-px bg-white/[0.15]" />
-        <div className="absolute bottom-0 left-0 w-px h-full bg-white/[0.15]" />
-      </motion.div>
-      <motion.div style={{ opacity: sideGlow }} className="absolute bottom-0 right-0 w-6 h-6 z-10">
-        <div className="absolute bottom-0 right-0 w-full h-px bg-white/[0.15]" />
-        <div className="absolute bottom-0 right-0 w-px h-full bg-white/[0.15]" />
-      </motion.div>
 
       {children}
     </div>

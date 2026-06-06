@@ -62,7 +62,7 @@ export default function HeroSection() {
   }, [displayedTitle, isDeleting, titleIndex, typingSpeed]);
 
   return (
-    <section ref={sectionRef} id="home" className="min-h-screen relative overflow-hidden">
+    <section ref={sectionRef} id="home" className="min-h-screen relative overflow-x-hidden">
       {/* Content — rendered first, sits below 3D */}
       <div className="absolute inset-0 z-0 bg-[#030712]" />
       <div className="absolute inset-0 z-[3] bg-gradient-to-r from-[#030712]/90 via-[#030712]/40 to-transparent pointer-events-none" style={{ clipPath: "inset(0 40% 0 0)" }} />

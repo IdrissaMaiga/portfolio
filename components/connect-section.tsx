@@ -173,7 +173,7 @@ export default function ConnectSection() {
     <section
       ref={sectionRef}
       id="connect"
-      className="relative overflow-hidden bg-[#030712]"
+      className="relative overflow-x-hidden bg-[#060a14]"
     >
       {/* ---- Floating code block ---- */}
       <FloatingCodeBlock

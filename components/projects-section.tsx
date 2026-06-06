@@ -309,7 +309,7 @@ export default function DetailedProjectsSection() {
   return (
     <section
       id="projects"
-      className="py-16 sm:py-24 lg:py-32 relative bg-[#030712] overflow-hidden"
+      className="py-16 sm:py-24 lg:py-32 relative bg-[#050a16] overflow-x-hidden"
     >
       {/* ---- Floating code block ---- */}
       <FloatingCodeBlock

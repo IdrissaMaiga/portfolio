@@ -116,7 +116,7 @@ export default function InsightsSection() {
   return (
     <section
       id="insights"
-      className="py-20 sm:py-28 lg:py-36 relative bg-[#030712] overflow-hidden"
+      className="py-20 sm:py-28 lg:py-36 relative bg-[#070c1a] overflow-x-hidden"
     >
       {/* ---- Floating code block ---- */}
       <FloatingCodeBlock

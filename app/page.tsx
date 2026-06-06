@@ -16,40 +16,40 @@ const ScrollSceneManager = dynamic(() => import("@/components/3d/scroll-scene-ma
 export default function Home() {
   return (
     <ScrollOrchestrator>
-      <main className="min-h-screen relative overflow-x-hidden">
+      <main className="min-h-screen relative overflow-x-hidden bg-[#020510]">
         <ScrollSceneManager />
 
-        <RoomFrame>
+        <RoomFrame accent="blue">
           <HeroSection />
         </RoomFrame>
 
         <SectionTransition variant="double-door" />
 
-        <RoomFrame>
+        <RoomFrame accent="indigo">
           <StorySection />
         </RoomFrame>
 
         <SectionTransition variant="single-door" />
 
-        <RoomFrame>
+        <RoomFrame accent="purple">
           <ProjectsSection />
         </RoomFrame>
 
         <SectionTransition variant="double-door" />
 
-        <RoomFrame>
+        <RoomFrame accent="cyan">
           <SkillsBentoSection />
         </RoomFrame>
 
         <SectionTransition variant="slide-up" />
 
-        <RoomFrame>
+        <RoomFrame accent="indigo">
           <InsightsSection />
         </RoomFrame>
 
         <SectionTransition variant="iris" />
 
-        <RoomFrame>
+        <RoomFrame accent="amber">
           <ConnectSection />
         </RoomFrame>
       </main>

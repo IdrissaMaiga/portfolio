@@ -11,7 +11,7 @@ export default function SkillsBentoSection() {
   return (
     <section
       id="skills"
-      className="relative py-12 sm:py-16 lg:py-20 overflow-hidden bg-[#030712]"
+      className="relative py-12 sm:py-16 lg:py-20 overflow-x-hidden bg-[#040916]"
     >
       {/* ---- Floating code block ---- */}
       <FloatingCodeBlock

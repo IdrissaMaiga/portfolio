@@ -89,7 +89,7 @@ export default function StorySection() {
   return (
     <section
       id="story"
-      className="py-20 sm:py-28 lg:py-40 relative bg-[#0a0f1e] overflow-hidden"
+      className="py-20 sm:py-28 lg:py-40 relative bg-[#080d1c] overflow-x-hidden"
     >
       {/* ---- Floating code blocks ---- */}
       <FloatingCodeBlock
