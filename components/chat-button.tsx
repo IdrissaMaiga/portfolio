@@ -312,41 +312,157 @@ export default function ChatButton() {
     }
   };
 
+  const renderMarkdown = (text: string): React.ReactNode[] => {
+    const nodes: React.ReactNode[] = [];
+    const lines = text.split("\n");
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // Code blocks
+      if (line.startsWith("```")) {
+        const lang = line.slice(3).trim();
+        const codeLines: string[] = [];
+        i++;
+        while (i < lines.length && !lines[i].startsWith("```")) {
+          codeLines.push(lines[i]);
+          i++;
+        }
+        if (i < lines.length) i++; // skip closing ```
+        nodes.push(
+          <div key={`code-${i}`} className="my-2">
+            {lang && <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-1 font-medium">{lang}</div>}
+            <div className="bg-black/40 text-gray-200 p-3 rounded-lg font-mono text-xs overflow-x-auto border border-white/[0.06] whitespace-pre">
+              {codeLines.join("\n")}
+            </div>
+          </div>
+        );
+        continue;
+      }
+
+      // Tables (detect | at start)
+      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+        const tableRows: string[] = [];
+        while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+          tableRows.push(lines[i]);
+          i++;
+        }
+        const parseRow = (row: string) => row.split("|").slice(1, -1).map(c => c.trim());
+        const header = parseRow(tableRows[0]);
+        const isSeparator = (r: string) => /^\|[\s\-:|]+\|$/.test(r.trim());
+        const dataStart = tableRows.length > 1 && isSeparator(tableRows[1]) ? 2 : 1;
+        const bodyRows = tableRows.slice(dataStart).map(parseRow);
+
+        nodes.push(
+          <div key={`table-${i}`} className="my-2 overflow-x-auto rounded-lg border border-white/[0.08]">
+            <table className="w-full text-xs">
+              <thead className="bg-white/[0.05]">
+                <tr>{header.map((h, j) => <th key={j} className="px-2 py-1.5 text-left font-semibold text-gray-200">{renderInline(h)}</th>)}</tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.06]">
+                {bodyRows.map((row, ri) => (
+                  <tr key={ri} className="hover:bg-white/[0.02]">
+                    {row.map((cell, ci) => <td key={ci} className="px-2 py-1.5 text-gray-300">{renderInline(cell)}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+        continue;
+      }
+
+      // Headers
+      const headerMatch = line.match(/^(#{1,4})\s+(.+)/);
+      if (headerMatch) {
+        const level = headerMatch[1].length;
+        const sizes = ["text-base font-bold", "text-sm font-bold", "text-sm font-semibold", "text-xs font-semibold"];
+        nodes.push(<div key={`h-${i}`} className={`${sizes[level - 1]} text-white mt-2 mb-1`}>{renderInline(headerMatch[2])}</div>);
+        i++;
+        continue;
+      }
+
+      // Unordered list items
+      if (/^[\s]*[-*]\s/.test(line)) {
+        const listItems: string[] = [];
+        while (i < lines.length && /^[\s]*[-*]\s/.test(lines[i])) {
+          listItems.push(lines[i].replace(/^[\s]*[-*]\s/, ""));
+          i++;
+        }
+        nodes.push(
+          <ul key={`ul-${i}`} className="my-1 pl-3 space-y-0.5">
+            {listItems.map((item, j) => <li key={j} className="text-gray-300 flex gap-1.5 items-start"><span className="text-blue-400 mt-1.5 shrink-0 w-1 h-1 rounded-full bg-blue-400 inline-block" /><span>{renderInline(item)}</span></li>)}
+          </ul>
+        );
+        continue;
+      }
+
+      // Numbered list items
+      if (/^\d+[.)]\s/.test(line)) {
+        const listItems: string[] = [];
+        while (i < lines.length && /^\d+[.)]\s/.test(lines[i])) {
+          listItems.push(lines[i].replace(/^\d+[.)]\s/, ""));
+          i++;
+        }
+        nodes.push(
+          <ol key={`ol-${i}`} className="my-1 pl-3 space-y-0.5">
+            {listItems.map((item, j) => <li key={j} className="text-gray-300 flex gap-1.5 items-start"><span className="text-blue-400 text-xs font-medium shrink-0 w-4">{j + 1}.</span><span>{renderInline(item)}</span></li>)}
+          </ol>
+        );
+        continue;
+      }
+
+      // Empty line = paragraph break
+      if (!line.trim()) {
+        nodes.push(<div key={`br-${i}`} className="h-2" />);
+        i++;
+        continue;
+      }
+
+      // Regular paragraph
+      nodes.push(<div key={`p-${i}`} className="text-gray-200">{renderInline(line)}</div>);
+      i++;
+    }
+
+    return nodes;
+  };
+
+  const renderInline = (text: string): React.ReactNode => {
+    const parts: React.ReactNode[] = [];
+    const regex = /(\*\*(.+?)\*\*)|(`([^`]+)`)|(\[([^\]]+)\]\(([^)]+)\))/g;
+    let lastIdx = 0;
+    let match: RegExpExecArray | null;
+    let key = 0;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(<span key={key++}>{text.slice(lastIdx, match.index)}</span>);
+      }
+      if (match[2]) {
+        parts.push(<strong key={key++} className="text-white font-semibold">{match[2]}</strong>);
+      } else if (match[4]) {
+        parts.push(<code key={key++} className="px-1 py-0.5 rounded bg-white/[0.08] text-cyan-300 text-[0.85em] font-mono">{match[4]}</code>);
+      } else if (match[6] && match[7]) {
+        parts.push(<a key={key++} href={match[7]} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline underline-offset-2">{match[6]}</a>);
+      }
+      lastIdx = match.index + match[0].length;
+    }
+    if (lastIdx < text.length) {
+      parts.push(<span key={key++}>{text.slice(lastIdx)}</span>);
+    }
+    return parts.length > 0 ? parts : text;
+  };
+
   const renderMessageContent = (message: Message) => {
     const textToRender = message.text;
     const cursor = message.isStreaming ? (
       <span className="inline-block w-0.5 h-4 ml-0.5 bg-blue-400 animate-blink align-middle" />
     ) : null;
 
-    if (message.code && textToRender.includes("```")) {
-      return (
-        <div className="whitespace-pre-wrap text-sm leading-relaxed">
-          {textToRender.split(/(```[\s\S]*?```)/g).map((part, i) => {
-            if (part.startsWith("```") && part.endsWith("```")) {
-              const match = part.match(/```(.+?)\n([\s\S]*?)```/);
-              if (match) {
-                const [, lang, code] = match;
-                return (
-                  <div key={i} className="my-2">
-                    <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-1 font-medium">{lang}</div>
-                    <div className="bg-black/40 text-gray-200 p-3 rounded-lg font-mono text-xs overflow-x-auto border border-white/[0.06]">
-                      {code.replace(/</g, "<").replace(/>/g, ">")}
-                    </div>
-                  </div>
-                );
-              }
-              return <span key={i}>{part}</span>;
-            }
-            return <span key={i}>{part}</span>;
-          })}
-          {cursor}
-        </div>
-      );
-    }
-
     return (
-      <div className="whitespace-pre-wrap text-sm leading-relaxed">
-        {textToRender}
+      <div className="text-sm leading-relaxed">
+        {renderMarkdown(textToRender)}
         {cursor}
       </div>
     );
