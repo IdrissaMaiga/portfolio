@@ -3,12 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { FiGithub, FiLinkedin, FiMail, FiArrowRight } from "react-icons/fi";
-import dynamic from "next/dynamic";
-
-const Hero3DScene = dynamic(() => import("./hero-3d-scene"), {
-  ssr: false,
-  loading: () => <div className="absolute inset-0 bg-[#030712]" />,
-});
+import ArtBg from "@/components/art-bg";
 
 const titles = [
   "Full Stack Engineer",
@@ -63,10 +58,10 @@ export default function HeroSection() {
 
   return (
     <section ref={sectionRef} id="home" className="min-h-screen relative overflow-x-hidden">
-      {/* Content — rendered first, sits below 3D */}
       <div className="absolute inset-0 z-0 bg-[#030712]" />
-      <div className="absolute inset-0 z-[3] bg-gradient-to-r from-[#030712]/90 via-[#030712]/40 to-transparent pointer-events-none" style={{ clipPath: "inset(0 40% 0 0)" }} />
-      <div className="absolute inset-0 z-[3] bg-gradient-to-t from-[#030712]/60 via-transparent to-[#030712]/20 pointer-events-none" />
+      <ArtBg variant="hero" />
+      <div className="absolute inset-0 z-[2] bg-gradient-to-r from-[#030712]/80 via-[#030712]/30 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 z-[2] bg-gradient-to-t from-[#030712]/50 via-transparent to-transparent pointer-events-none" />
 
       <motion.div
         style={{ y: contentY, opacity: contentOpacity, scale: contentScale }}
@@ -173,11 +168,6 @@ export default function HeroSection() {
         </motion.div>
       </motion.div>
 
-      {/* 3D Scene — on top, interactive on right half */}
-      <div className="absolute inset-0 z-[3]" style={{ clipPath: "inset(0 0 0 0)" }}>
-        <Hero3DScene />
-      </div>
-
       {/* Scroll indicator */}
       <motion.div
         className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[4] pointer-events-none"
@@ -196,20 +186,6 @@ export default function HeroSection() {
         </motion.div>
       </motion.div>
 
-      {/* Wave transition to next section */}
-      <div className="absolute bottom-0 left-0 right-0 z-[5] pointer-events-none">
-        <svg
-          className="block w-full"
-          viewBox="0 0 1200 120"
-          preserveAspectRatio="none"
-          style={{ height: "80px" }}
-        >
-          <path
-            d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
-            className="fill-[#0a0f1e]"
-          />
-        </svg>
-      </div>
     </section>
   );
 }

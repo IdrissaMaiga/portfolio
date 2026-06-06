@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
 import {
   FiMail,
   FiMapPin,
@@ -19,12 +18,7 @@ import {
 } from "react-icons/fi";
 import { FaXTwitter } from "react-icons/fa6";
 import FloatingCodeBlock from "@/components/floating-code-block";
-
-const InteractiveScene = dynamic(() => import("@/components/3d/interactive-scene"), { ssr: false });
-const ContactParticles = dynamic(
-  () => import("@/components/3d/contact-particles"),
-  { ssr: false }
-);
+import ArtBg from "@/components/art-bg";
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -175,6 +169,8 @@ export default function ConnectSection() {
       id="connect"
       className="relative overflow-x-hidden bg-[#060a14]"
     >
+      <ArtBg variant="connect" />
+
       {/* ---- Floating code block ---- */}
       <FloatingCodeBlock
         code={`await sendMessage({\n  to: "idrissa.maiga",\n  from: visitor.email,\n  subject: "Let's build",\n  priority: "high",\n});`}
@@ -182,29 +178,6 @@ export default function ConnectSection() {
         position="left"
         className="top-48"
       />
-
-      {/* ---- 3D particles background ---- */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <ContactParticles className="w-full h-full" />
-      </div>
-
-      {/* ---- Pulsing amber/orange glow blobs ---- */}
-      <div
-        className="absolute top-1/4 -left-32 w-96 h-96 bg-amber-500/[0.12] rounded-full blur-3xl pointer-events-none"
-        style={{ animation: "pulse-glow 4s ease-in-out infinite" }}
-      />
-      <div
-        className="absolute bottom-1/4 -right-32 w-96 h-96 bg-orange-600/[0.12] rounded-full blur-3xl pointer-events-none"
-        style={{ animation: "pulse-glow 4s ease-in-out infinite 2s" }}
-      />
-
-      {/* Pulse keyframes */}
-      <style jsx>{`
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 0.12; transform: scale(1); }
-          50% { opacity: 0.2; transform: scale(1.08); }
-        }
-      `}</style>
 
       {/* Spotlight overlay -- fades in via framer-motion */}
       <motion.div
@@ -258,8 +231,6 @@ export default function ConnectSection() {
               just a message away.
             </p>
           </div>
-
-          <InteractiveScene formation="ring" color="#f59e0b" height="200px" style="connect" className="mb-10 rounded-2xl overflow-hidden border border-white/[0.06]" />
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 sm:gap-8 md:gap-10">
             {/* ---- Contact information card ---- */}

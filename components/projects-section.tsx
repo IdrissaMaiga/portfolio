@@ -3,10 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import dynamic from "next/dynamic";
-import ProjectCard3D from "@/components/3d/project-card-3d";
-
-const InteractiveScene = dynamic(() => import("@/components/3d/interactive-scene"), { ssr: false });
 import {
   FiExternalLink,
   FiGithub,
@@ -20,6 +16,7 @@ import {
   FiAlertTriangle,
 } from "react-icons/fi";
 import FloatingCodeBlock from "@/components/floating-code-block";
+import ArtBg from "@/components/art-bg";
 
 /* ------------------------------------------------------------------ */
 /*  Project data                                                       */
@@ -311,6 +308,8 @@ export default function DetailedProjectsSection() {
       id="projects"
       className="py-16 sm:py-24 lg:py-32 relative bg-[#050a16] overflow-x-hidden"
     >
+      <ArtBg variant="projects" />
+
       {/* ---- Floating code block ---- */}
       <FloatingCodeBlock
         code={`@GetMapping("/api/projects")\npublic List<Project> getAll() {\n    return projectService\n        .findAll()\n        .stream()\n        .filter(Project::isPublic)\n        .toList();\n}`}
@@ -318,11 +317,6 @@ export default function DetailedProjectsSection() {
         position="right"
         className="top-48"
       />
-
-      {/* ---- Ambient glow blobs ---- */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-pink-600/[0.10] rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/[0.12] rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-pink-600/[0.10] rounded-full blur-[160px] pointer-events-none" />
 
       {/* Subtle grid pattern */}
       <div
@@ -364,13 +358,10 @@ export default function DetailedProjectsSection() {
           </p>
         </motion.div>
 
-        {/* ---- Interactive 3D ---- */}
-        <InteractiveScene formation="grid" color="#a855f7" height="220px" style="showcase" className="mb-10 rounded-2xl overflow-hidden border border-white/[0.06]" />
-
         {/* ---- Project grid (6 cards) ---- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 project-grid" style={{ perspective: "1200px" }}>
           {projects.map((project, index) => (
-            <ProjectCard3D key={project.id} className="project-card-wrapper">
+            <div key={project.id} className="project-card-wrapper">
             <motion.div
               initial={{ opacity: 0, z: -100, rotateY: index % 2 === 0 ? -10 : 10 }}
               whileInView={{ opacity: 1, z: 0, rotateY: 0 }}
@@ -452,7 +443,7 @@ export default function DetailedProjectsSection() {
                 </div>
               </div>
             </motion.div>
-            </ProjectCard3D>
+            </div>
           ))}
         </div>
       </div>

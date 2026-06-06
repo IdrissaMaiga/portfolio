@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import ProjectCard3D from "@/components/3d/project-card-3d";
 import { FiClock, FiCalendar } from "react-icons/fi";
 import type { BlogPost } from "@/lib/blog";
 
@@ -20,7 +19,7 @@ export default function BlogCard({ post, index }: BlogCardProps) {
   });
 
   return (
-    <ProjectCard3D>
+    <div>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -82,6 +81,6 @@ export default function BlogCard({ post, index }: BlogCardProps) {
           </div>
         </Link>
       </motion.div>
-    </ProjectCard3D>
+    </div>
   );
 }

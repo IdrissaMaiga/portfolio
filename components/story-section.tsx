@@ -3,10 +3,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import dynamic from "next/dynamic";
-
-const AboutHelix = dynamic(() => import("@/components/3d/about-3d-helix"), { ssr: false });
-const InteractiveScene = dynamic(() => import("@/components/3d/interactive-scene"), { ssr: false });
 import {
   FiUser,
   FiAward,
@@ -18,6 +14,7 @@ import {
 } from "react-icons/fi";
 import AnimatedCounter from "@/components/animated-counter";
 import FloatingCodeBlock from "@/components/floating-code-block";
+import ArtBg from "@/components/art-bg";
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -91,6 +88,8 @@ export default function StorySection() {
       id="story"
       className="py-20 sm:py-28 lg:py-40 relative bg-[#080d1c] overflow-x-hidden"
     >
+      <ArtBg variant="story" />
+
       {/* ---- Floating code blocks ---- */}
       <FloatingCodeBlock
         code={`class Developer:\n    name = "Idrissa Maiga"\n    location = "Budapest, HU"\n    gpa = 8.7\n\n    def build(self, idea):\n        return Solution(idea)`}
@@ -104,11 +103,6 @@ export default function StorySection() {
         position="right"
         className="bottom-32"
       />
-
-      {/* ---- Ambient glow blobs ---- */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-600/[0.15] rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-600/[0.12] rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-600/[0.12] rounded-full blur-[150px] pointer-events-none" />
 
       {/* Subtle grid pattern */}
       <div
@@ -138,9 +132,6 @@ export default function StorySection() {
           </p>
         </div>
 
-        {/* ---- Interactive 3D Scene ---- */}
-        <InteractiveScene formation="dna" color="#22d3ee" height="250px" style="bio" className="mb-10 rounded-2xl overflow-hidden border border-white/[0.06]" />
-
         {/* ---- Two-column layout ---- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* LEFT: Personal Info Card */}
@@ -151,7 +142,6 @@ export default function StorySection() {
             viewport={{ once: true, margin: "-100px" }}
             className="relative"
           >
-            <AboutHelix className="absolute inset-0 z-0 opacity-30" />
             <div className="relative z-10 h-full rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] p-6 sm:p-8 overflow-hidden group">
               {/* Hover glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />

@@ -1,11 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
 import BentoGrid from "./bento-grid";
 import FloatingCodeBlock from "@/components/floating-code-block";
-
-const InteractiveScene = dynamic(() => import("@/components/3d/interactive-scene"), { ssr: false });
+import ArtBg from "@/components/art-bg";
 
 export default function SkillsBentoSection() {
   return (
@@ -13,6 +11,8 @@ export default function SkillsBentoSection() {
       id="skills"
       className="relative py-12 sm:py-16 lg:py-20 overflow-x-hidden bg-[#040916]"
     >
+      <ArtBg variant="skills" />
+
       {/* ---- Floating code block ---- */}
       <FloatingCodeBlock
         code={`const skills = {\n  languages: ["Java", "TypeScript"],\n  frameworks: ["Spring", "React"],\n  cloud: ["AWS", "Docker"],\n  ai: ["Gemini", "LangChain"],\n};`}
@@ -20,11 +20,6 @@ export default function SkillsBentoSection() {
         position="left"
         className="top-32"
       />
-
-      {/* Ambient glow blobs */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-600/[0.12] rounded-full blur-[128px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-teal-600/[0.10] rounded-full blur-[128px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-600/[0.10] rounded-full blur-[128px] pointer-events-none" />
 
       {/* Noise overlay */}
       <div
@@ -57,9 +52,6 @@ export default function SkillsBentoSection() {
             development stack
           </p>
         </motion.div>
-
-        {/* Interactive 3D */}
-        <InteractiveScene formation="spiral" color="#10b981" height="250px" style="tech" className="mb-10 rounded-2xl overflow-hidden border border-white/[0.06]" />
 
         {/* Bento grid */}
         <motion.div

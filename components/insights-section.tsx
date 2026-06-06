@@ -3,9 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import dynamic from "next/dynamic";
-
-const InteractiveScene = dynamic(() => import("@/components/3d/interactive-scene"), { ssr: false });
 import Link from "next/link";
 import {
   FiArrowRight,
@@ -15,8 +12,8 @@ import {
   FiStar,
   FiExternalLink,
 } from "react-icons/fi";
-import ProjectCard3D from "@/components/3d/project-card-3d";
 import FloatingCodeBlock from "@/components/floating-code-block";
+import ArtBg from "@/components/art-bg";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -118,6 +115,8 @@ export default function InsightsSection() {
       id="insights"
       className="py-20 sm:py-28 lg:py-36 relative bg-[#070c1a] overflow-x-hidden"
     >
+      <ArtBg variant="insights" />
+
       {/* ---- Floating code block ---- */}
       <FloatingCodeBlock
         code={`async def publish(post):\n    await blog.save(post)\n    await linkedin.share(post)\n    await github.sync()\n    return {"status": "live"}`}
@@ -125,11 +124,6 @@ export default function InsightsSection() {
         position="right"
         className="top-40"
       />
-
-      {/* ---- Ambient glow blobs ---- */}
-      <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-indigo-500/[0.12] rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-32 w-[400px] h-[400px] bg-purple-500/[0.10] rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/[0.08] rounded-full blur-[140px] pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* ---- Section Header ---- */}
@@ -158,8 +152,6 @@ export default function InsightsSection() {
         </div>
 
         {/* ---- Content: Blog Cards + GitHub Widget ---- */}
-        <InteractiveScene formation="wave" color="#818cf8" height="200px" style="blog" className="mb-10 rounded-2xl overflow-hidden border border-white/[0.06]" />
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {/* Blog cards -- 2/3 width */}
           <motion.div
@@ -176,7 +168,7 @@ export default function InsightsSection() {
             ) : posts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {posts.slice(0, 3).map((post) => (
-                  <ProjectCard3D key={post.slug}>
+                  <div key={post.slug}>
                     <Link href={`/blog/${post.slug}`} className="block h-full">
                       <div className="h-full rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/[0.08] overflow-hidden group hover:border-indigo-500/30 transition-all duration-300">
                         {/* Image */}
@@ -234,7 +226,7 @@ export default function InsightsSection() {
                         </div>
                       </div>
                     </Link>
-                  </ProjectCard3D>
+                  </div>
                 ))}
               </div>
             ) : (
