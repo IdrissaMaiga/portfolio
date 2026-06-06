@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { getPostBySlug } from "@/lib/blog";
 import { components } from "@/components/blog/mdx-components";
 import BlogHeader from "@/components/blog/blog-header";
@@ -88,7 +89,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
           {/* MDX content */}
           <article className="prose-invert max-w-none">
-            <MDXRemote source={post.content} components={components} />
+            <MDXRemote source={post.content} components={components} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
           </article>
 
           {/* Bottom back link */}
