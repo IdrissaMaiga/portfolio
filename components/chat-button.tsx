@@ -473,30 +473,55 @@ export default function ChatButton() {
   return (
     <>
       <AnimatePresence>
-        {!isChatOpen && (
-          <motion.button
-            onClick={toggleChat}
-            className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-blue-600/90 backdrop-blur-md border border-blue-400/20 text-white font-medium text-sm shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-shadow cursor-pointer select-none"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
-            aria-label="Open AI chat"
-          >
-            <FiMessageCircle className="w-[18px] h-[18px]" />
-            <span>Ask AI</span>
-            {hasUnreadMessage && (
-              <>
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-300" />
-                </span>
-                <span className="absolute inset-0 rounded-2xl animate-pulse-slow opacity-40 shadow-[0_0_20px_6px_rgba(59,130,246,0.5)]" />
-              </>
-            )}
-          </motion.button>
-        )}
+        {!isChatOpen && (() => {
+          const lastAI = [...messages].reverse().find(m => m.sender === "AI" && (m.fullText || m.text));
+          const preview = lastAI ? (lastAI.fullText || lastAI.text).replace(/[*#`_\[\]]/g, "").replace(/\n+/g, " ").trim() : "";
+          const showPreview = preview && preview !== "Hello! I'm Idrissa's AI assistant. Ask me anything about his work, skills, or projects.";
+
+          return (
+            <motion.div
+              className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
+            >
+              {/* Latest message preview bubble */}
+              {showPreview && hasUnreadMessage && (
+                <motion.div
+                  onClick={toggleChat}
+                  className="max-w-[260px] px-3.5 py-2.5 rounded-2xl rounded-br-sm bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/[0.1] text-gray-300 text-xs leading-relaxed cursor-pointer hover:border-blue-500/30 transition-colors shadow-lg shadow-black/30"
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.8, type: "spring", stiffness: 300, damping: 25 }}
+                >
+                  <div className="line-clamp-2">{preview.length > 120 ? preview.slice(0, 120) + "..." : preview}</div>
+                  <div className="text-[10px] text-blue-400/60 mt-1">Tap to continue</div>
+                </motion.div>
+              )}
+
+              {/* Chat button */}
+              <motion.button
+                onClick={toggleChat}
+                className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-blue-600/90 backdrop-blur-md border border-blue-400/20 text-white font-medium text-sm shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-shadow cursor-pointer select-none relative"
+                whileHover={{ scale: 1.05 }}
+                aria-label="Open AI chat"
+              >
+                <FiMessageCircle className="w-[18px] h-[18px]" />
+                <span>Ask AI</span>
+                {hasUnreadMessage && (
+                  <>
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-300" />
+                    </span>
+                    <span className="absolute inset-0 rounded-2xl animate-pulse-slow opacity-40 shadow-[0_0_20px_6px_rgba(59,130,246,0.5)]" />
+                  </>
+                )}
+              </motion.button>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
 
       <AnimatePresence>
