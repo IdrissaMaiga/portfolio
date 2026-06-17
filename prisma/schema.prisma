@@ -58,6 +58,20 @@ model Like {
   @@map("likes")
 }
 
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  userId    String?  @map("user_id")
+  sessionId String   @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([sessionId])
+  @@map("page_views")
+}
+
 model AppSetting {
   key       String   @id
   value     String
