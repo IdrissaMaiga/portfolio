@@ -1,7 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const TOKEN_FILE = path.join(process.cwd(), '.linkedin-token.json');
+import { prisma } from './prisma';
 
 interface LinkedInToken {
   access_token: string;
@@ -9,25 +6,31 @@ interface LinkedInToken {
   refresh_token?: string;
 }
 
+const TOKEN_KEY = 'linkedin_token';
+
 export async function getLinkedInToken(): Promise<string | null> {
   try {
-    if (!fs.existsSync(TOKEN_FILE)) return null;
-    const data: LinkedInToken = JSON.parse(fs.readFileSync(TOKEN_FILE, 'utf-8'));
-    if (Date.now() > data.expires_at) {
-      // Token expired — try refresh or return null
-      return null;
-    }
+    const setting = await prisma.appSetting.findUnique({ where: { key: TOKEN_KEY } });
+    if (!setting) return null;
+    const data: LinkedInToken = JSON.parse(setting.value);
+    if (Date.now() > data.expires_at) return null;
     return data.access_token;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
-export function saveLinkedInToken(access_token: string, expires_in: number, refresh_token?: string) {
+export async function saveLinkedInToken(access_token: string, expires_in: number, refresh_token?: string) {
   const data: LinkedInToken = {
     access_token,
     expires_at: Date.now() + expires_in * 1000,
     refresh_token,
   };
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify(data, null, 2));
+  await prisma.appSetting.upsert({
+    where: { key: TOKEN_KEY },
+    update: { value: JSON.stringify(data) },
+    create: { key: TOKEN_KEY, value: JSON.stringify(data) },
+  });
 }
 
 export async function getLinkedInProfileUrn(token: string): Promise<string> {
@@ -35,7 +38,7 @@ export async function getLinkedInProfileUrn(token: string): Promise<string> {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json();
-  return data.sub; // OpenID Connect subject = person URN
+  return data.sub;
 }
 
 export async function shareToLinkedIn(params: {

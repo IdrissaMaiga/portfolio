@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   }
 
   const tokenData = await tokenRes.json();
-  saveLinkedInToken(tokenData.access_token, tokenData.expires_in, tokenData.refresh_token);
+  await saveLinkedInToken(tokenData.access_token, tokenData.expires_in, tokenData.refresh_token);
 
   return NextResponse.json({ success: true, message: 'LinkedIn connected successfully' });
 }
