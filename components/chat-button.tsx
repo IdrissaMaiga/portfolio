@@ -2,7 +2,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiMessageCircle, FiSend, FiX, FiMinus, FiMic, FiMicOff, FiVolume2, FiVolumeX } from "react-icons/fi";
+import { useSession, signIn } from "next-auth/react";
+import {
+  FiMessageCircle, FiSend, FiX, FiMinus, FiMic, FiMicOff,
+  FiVolume2, FiVolumeX, FiPlus, FiTrash2, FiChevronLeft,
+} from "react-icons/fi";
 
 interface Message {
   text: string;
@@ -13,6 +17,13 @@ interface Message {
   fullText?: string;
 }
 
+interface ChatSessionItem {
+  id: string;
+  title: string | null;
+  updatedAt: string;
+  lastMessage: string | null;
+}
+
 const suggestions = [
   "Show me your projects",
   "What's your tech stack?",
@@ -21,16 +32,21 @@ const suggestions = [
 ];
 
 export default function ChatButton() {
+  const { data: session } = useSession();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [userMessage, setUserMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    { text: "Hello! I'm Idrissa's AI assistant. Ask me anything about his work, skills, or projects.", sender: "AI", timestamp: Date.now() },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [hasUnreadMessage, setHasUnreadMessage] = useState(true);
+  const [hasUnreadMessage, setHasUnreadMessage] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+
+  // Session management
+  const [sessions, setSessions] = useState<ChatSessionItem[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [showSessionList, setShowSessionList] = useState(false);
+  const [loadingSessions, setLoadingSessions] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
@@ -41,46 +57,48 @@ export default function ChatButton() {
   const isChatOpenRef = useRef(isChatOpen);
   const voiceEnabledRef = useRef(voiceEnabled);
   const isStreamingRef = useRef(false);
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => { isChatOpenRef.current = isChatOpen; }, [isChatOpen]);
   useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
 
-  // Load messages from localStorage (filter out broken streaming state)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("chatMessages");
-    if (saved) {
-      try {
-        const parsed: Message[] = JSON.parse(saved);
-        const clean = parsed
-          .map(m => ({ ...m, isStreaming: false, fullText: undefined, text: m.fullText || m.text }))
-          .filter(m => m.text && m.text.trim() !== "");
-        if (clean.length > 0) setMessages(clean);
-      } catch { /* ignore corrupt data */ }
-    }
+  // Load sessions when chat opens
+  const loadSessions = useCallback(async () => {
+    if (!session) return;
+    setLoadingSessions(true);
+    try {
+      const res = await fetch("/api/chat/sessions");
+      if (res.ok) {
+        const data = await res.json();
+        setSessions(data);
+      }
+    } catch { /* ignore */ }
+    setLoadingSessions(false);
+  }, [session]);
+
+  // Load messages for a session
+  const loadSessionMessages = useCallback(async (sessionId: string) => {
+    try {
+      const res = await fetch(`/api/chat/sessions/${sessionId}/messages`);
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(
+          data.map((m: { sender: string; text: string; createdAt: string }) => ({
+            text: m.text,
+            sender: m.sender as "User" | "AI",
+            timestamp: new Date(m.createdAt).getTime(),
+          }))
+        );
+      }
+    } catch { /* ignore */ }
   }, []);
 
-  // Save to localStorage only when NOT streaming
   useEffect(() => {
-    if (isStreamingRef.current) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      if (typeof window !== "undefined") {
-        const completed = messages
-          .map((msg) => ({
-            text: msg.fullText || msg.text,
-            sender: msg.sender,
-            timestamp: msg.timestamp,
-            code: msg.code,
-          }))
-          .filter(m => m.text && m.text.trim() !== "");
-        localStorage.setItem("chatMessages", JSON.stringify(completed));
-      }
-    }, 300);
-  }, [messages]);
+    if (isChatOpen && session) {
+      loadSessions();
+    }
+  }, [isChatOpen, session, loadSessions]);
 
-  // Scroll to bottom (debounced during streaming)
+  // Scroll to bottom
   const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
@@ -99,7 +117,6 @@ export default function ChatButton() {
   useEffect(() => {
     return () => {
       if (streamingTimerRef.current) clearTimeout(streamingTimerRef.current);
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
     };
   }, []);
@@ -152,16 +169,12 @@ export default function ChatButton() {
     setIsListening(false);
   };
 
-  // Voice output - speaks complete text ONCE after streaming finishes
+  // Voice output
   const speakText = useCallback((text: string) => {
     if (!voiceEnabledRef.current || typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-
     const clean = text.replace(/```[\s\S]*?```/g, "code block").replace(/[*_#`]/g, "").replace(/\n+/g, ". ");
-
-    // Chrome bug: long utterances get stuck. Split into chunks.
     const chunks = clean.match(/.{1,200}[.!?,;:]?\s*/g) || [clean];
-
     chunks.forEach((chunk, i) => {
       const utterance = new SpeechSynthesisUtterance(chunk.trim());
       utterance.rate = 1.1;
@@ -182,6 +195,10 @@ export default function ChatButton() {
   };
 
   const toggleChat = () => {
+    if (!session) {
+      signIn("google");
+      return;
+    }
     if (isChatOpen) { setIsChatOpen(false); setIsMinimized(false); }
     else { setIsChatOpen(true); setIsMinimized(false); }
   };
@@ -198,6 +215,30 @@ export default function ChatButton() {
   };
 
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const startNewChat = () => {
+    setActiveSessionId(null);
+    setMessages([]);
+    setShowSessionList(false);
+  };
+
+  const openSession = async (sessionId: string) => {
+    setActiveSessionId(sessionId);
+    setShowSessionList(false);
+    await loadSessionMessages(sessionId);
+  };
+
+  const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await fetch(`/api/chat/sessions?id=${sessionId}`, { method: "DELETE" });
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      if (activeSessionId === sessionId) {
+        setActiveSessionId(null);
+        setMessages([]);
+      }
+    } catch { /* ignore */ }
+  };
 
   // Stream text character by character
   const streamText = useCallback((fullText: string, messageIndex: number) => {
@@ -240,6 +281,8 @@ export default function ChatButton() {
     const trimmed = text.trim();
     if (!trimmed || isTyping) return;
 
+    if (!session) { signIn("google"); return; }
+
     if (streamingTimerRef.current) {
       clearTimeout(streamingTimerRef.current);
       streamingTimerRef.current = null;
@@ -263,13 +306,25 @@ export default function ChatButton() {
         signal: controller.signal,
         body: JSON.stringify({
           userCommand: trimmed,
-          history: messages.slice(-8).map(m => ({ sender: m.sender, text: m.fullText || m.text })),
+          sessionId: activeSessionId,
         }),
       });
       clearTimeout(timeout);
 
-      if (!response.ok) throw new Error(`${response.status}`);
+      if (!response.ok) {
+        if (response.status === 401) {
+          signIn("google");
+          return;
+        }
+        throw new Error(`${response.status}`);
+      }
       const data = await response.json();
+
+      // Update sessionId if a new one was created
+      if (data.sessionId && !activeSessionId) {
+        setActiveSessionId(data.sessionId);
+        loadSessions();
+      }
 
       const aiText = data.response || (data.action ? "Done!" : "How can I help?");
 
@@ -320,7 +375,6 @@ export default function ChatButton() {
     while (i < lines.length) {
       const line = lines[i];
 
-      // Code blocks
       if (line.startsWith("```")) {
         const lang = line.slice(3).trim();
         const codeLines: string[] = [];
@@ -329,7 +383,7 @@ export default function ChatButton() {
           codeLines.push(lines[i]);
           i++;
         }
-        if (i < lines.length) i++; // skip closing ```
+        if (i < lines.length) i++;
         nodes.push(
           <div key={`code-${i}`} className="my-2">
             {lang && <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-1 font-medium">{lang}</div>}
@@ -341,7 +395,6 @@ export default function ChatButton() {
         continue;
       }
 
-      // Tables (detect | at start)
       if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
         const tableRows: string[] = [];
         while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
@@ -373,7 +426,6 @@ export default function ChatButton() {
         continue;
       }
 
-      // Headers
       const headerMatch = line.match(/^(#{1,4})\s+(.+)/);
       if (headerMatch) {
         const level = headerMatch[1].length;
@@ -383,7 +435,6 @@ export default function ChatButton() {
         continue;
       }
 
-      // Unordered list items
       if (/^[\s]*[-*]\s/.test(line)) {
         const listItems: string[] = [];
         while (i < lines.length && /^[\s]*[-*]\s/.test(lines[i])) {
@@ -398,7 +449,6 @@ export default function ChatButton() {
         continue;
       }
 
-      // Numbered list items
       if (/^\d+[.)]\s/.test(line)) {
         const listItems: string[] = [];
         while (i < lines.length && /^\d+[.)]\s/.test(lines[i])) {
@@ -413,14 +463,12 @@ export default function ChatButton() {
         continue;
       }
 
-      // Empty line = paragraph break
       if (!line.trim()) {
         nodes.push(<div key={`br-${i}`} className="h-2" />);
         i++;
         continue;
       }
 
-      // Regular paragraph
       nodes.push(<div key={`p-${i}`} className="text-gray-200">{renderInline(line)}</div>);
       i++;
     }
@@ -444,7 +492,8 @@ export default function ChatButton() {
       } else if (match[4]) {
         parts.push(<code key={key++} className="px-1 py-0.5 rounded bg-white/[0.08] text-cyan-300 text-[0.85em] font-mono">{match[4]}</code>);
       } else if (match[6] && match[7]) {
-        parts.push(<a key={key++} href={match[7]} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline underline-offset-2">{match[6]}</a>);
+        const href = /^https?:\/\//i.test(match[7]) ? match[7] : "#";
+        parts.push(<a key={key++} href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline underline-offset-2">{match[6]}</a>);
       }
       lastIdx = match.index + match[0].length;
     }
@@ -468,7 +517,7 @@ export default function ChatButton() {
     );
   };
 
-  const showSuggestions = messages.length <= 1 && !isTyping;
+  const showSuggestions = messages.length === 0 && !isTyping;
 
   return (
     <>
@@ -476,7 +525,7 @@ export default function ChatButton() {
         {!isChatOpen && (() => {
           const lastAI = [...messages].reverse().find(m => m.sender === "AI" && (m.fullText || m.text));
           const preview = lastAI ? (lastAI.fullText || lastAI.text).replace(/[*#`_\[\]]/g, "").replace(/\n+/g, " ").trim() : "";
-          const showPreview = preview && preview !== "Hello! I'm Idrissa's AI assistant. Ask me anything about his work, skills, or projects.";
+          const showPreview = preview && hasUnreadMessage;
 
           return (
             <motion.div
@@ -486,8 +535,7 @@ export default function ChatButton() {
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
             >
-              {/* Latest message preview bubble */}
-              {showPreview && hasUnreadMessage && (
+              {showPreview && (
                 <motion.div
                   onClick={toggleChat}
                   className="max-w-[260px] px-3.5 py-2.5 rounded-2xl rounded-br-sm bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/[0.1] text-gray-300 text-xs leading-relaxed cursor-pointer hover:border-blue-500/30 transition-colors shadow-lg shadow-black/30"
@@ -500,7 +548,6 @@ export default function ChatButton() {
                 </motion.div>
               )}
 
-              {/* Chat button */}
               <motion.button
                 onClick={toggleChat}
                 className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-blue-600/90 backdrop-blur-md border border-blue-400/20 text-white font-medium text-sm shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-shadow cursor-pointer select-none relative"
@@ -508,7 +555,7 @@ export default function ChatButton() {
                 aria-label="Open AI chat"
               >
                 <FiMessageCircle className="w-[18px] h-[18px]" />
-                <span>Ask AI</span>
+                <span>{session ? "Ask AI" : "Sign in to chat"}</span>
                 {hasUnreadMessage && (
                   <>
                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -537,95 +584,185 @@ export default function ChatButton() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 bg-white/[0.05] border-b border-white/[0.08] shrink-0">
               <div className="flex items-center gap-2.5">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
-                </span>
-                <span className="text-white font-semibold text-sm tracking-tight">Idrissa&apos;s AI</span>
+                {showSessionList ? (
+                  <span className="text-white font-semibold text-sm tracking-tight">Chat History</span>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowSessionList(true)}
+                      className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors"
+                      title="Chat history"
+                    >
+                      <FiChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
+                    </span>
+                    <span className="text-white font-semibold text-sm tracking-tight">Idrissa&apos;s AI</span>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-1">
+                {!showSessionList && (
+                  <button
+                    onClick={startNewChat}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors"
+                    title="New chat"
+                  >
+                    <FiPlus className="w-4 h-4" />
+                  </button>
+                )}
                 <button onClick={handleMinimize} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors" aria-label="Minimize"><FiMinus className="w-4 h-4" /></button>
                 <button onClick={toggleChat} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors" aria-label="Close"><FiX className="w-4 h-4" /></button>
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" ref={chatHistory} style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
-              {messages.map((message) => {
-                const displayText = message.text || message.fullText || "";
-                if (!displayText && !message.isStreaming) return null;
-                return (
-                  <div key={message.timestamp} className={`flex flex-col ${message.sender === "User" ? "items-end" : "items-start"}`}>
-                    <div className={`max-w-[85%] px-3.5 py-2.5 ${message.sender === "AI" ? "bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm text-gray-200" : "bg-blue-600/80 rounded-2xl rounded-tr-sm text-white"}`}>
-                      {renderMessageContent(message)}
+            {showSessionList ? (
+              /* Session list view */
+              <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
+                <div className="p-3">
+                  <button
+                    onClick={startNewChat}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl bg-blue-600/20 border border-blue-500/20 text-blue-300 text-sm font-medium hover:bg-blue-600/30 transition-colors mb-3"
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    New Chat
+                  </button>
+
+                  {loadingSessions ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="w-5 h-5 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
                     </div>
-                    <span className="text-[11px] text-gray-500 mt-1 px-1">{formatTime(message.timestamp)}</span>
-                  </div>
-                );
-              })}
-
-              {showSuggestions && (
-                <div className="grid grid-cols-2 gap-2 pt-2 pb-1">
-                  {suggestions.map((s, i) => (
-                    <button key={i} onClick={() => sendMessage(s)} className="text-xs text-left px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-gray-300 hover:bg-blue-500/20 hover:border-blue-500/30 hover:text-blue-200 transition-all duration-200 cursor-pointer">{s}</button>
-                  ))}
-                </div>
-              )}
-
-              {isTyping && (
-                <div className="flex flex-col items-start">
-                  <div className="max-w-[85%] px-3.5 py-3 bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  ) : sessions.length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-8">No previous chats</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {sessions.map((s) => (
+                        <div
+                          key={s.id}
+                          onClick={() => openSession(s.id)}
+                          className={`group flex items-start gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                            activeSessionId === s.id
+                              ? "bg-blue-500/15 border border-blue-500/20"
+                              : "hover:bg-white/[0.04] border border-transparent"
+                          }`}
+                        >
+                          <FiMessageCircle className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-200 truncate">{s.title || "Untitled chat"}</p>
+                            {s.lastMessage && (
+                              <p className="text-xs text-gray-500 truncate mt-0.5">{s.lastMessage}</p>
+                            )}
+                            <p className="text-[10px] text-gray-600 mt-0.5">
+                              {new Date(s.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => deleteSession(s.id, e)}
+                            className="p-1 rounded text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                            title="Delete chat"
+                          >
+                            <FiTrash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" ref={chatHistory} style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
+                  {/* Welcome message for new chats */}
+                  {messages.length === 0 && (
+                    <div className="flex flex-col items-start">
+                      <div className="max-w-[85%] px-3.5 py-2.5 bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm text-gray-200">
+                        <div className="text-sm leading-relaxed">
+                          Hello{session?.user?.name ? ` ${session.user.name.split(" ")[0]}` : ""}! I&apos;m Idrissa&apos;s AI assistant. Ask me anything about his work, skills, or projects.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {messages.map((message) => {
+                    const displayText = message.text || message.fullText || "";
+                    if (!displayText && !message.isStreaming) return null;
+                    return (
+                      <div key={message.timestamp} className={`flex flex-col ${message.sender === "User" ? "items-end" : "items-start"}`}>
+                        <div className={`max-w-[85%] px-3.5 py-2.5 ${message.sender === "AI" ? "bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm text-gray-200" : "bg-blue-600/80 rounded-2xl rounded-tr-sm text-white"}`}>
+                          {renderMessageContent(message)}
+                        </div>
+                        <span className="text-[11px] text-gray-500 mt-1 px-1">{formatTime(message.timestamp)}</span>
+                      </div>
+                    );
+                  })}
+
+                  {showSuggestions && (
+                    <div className="grid grid-cols-2 gap-2 pt-2 pb-1">
+                      {suggestions.map((s, i) => (
+                        <button key={i} onClick={() => sendMessage(s)} className="text-xs text-left px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-gray-300 hover:bg-blue-500/20 hover:border-blue-500/30 hover:text-blue-200 transition-all duration-200 cursor-pointer">{s}</button>
+                      ))}
+                    </div>
+                  )}
+
+                  {isTyping && (
+                    <div className="flex flex-col items-start">
+                      <div className="max-w-[85%] px-3.5 py-3 bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input */}
+                <div className="shrink-0 px-3 py-3 border-t border-white/[0.08] bg-white/[0.02]">
+                  <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-1.5">
+                    <button
+                      onClick={isListening ? stopListening : startListening}
+                      className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer ${isListening ? "bg-red-500/80 text-white animate-pulse" : "bg-white/[0.06] text-gray-400 hover:text-blue-400 hover:bg-blue-500/20"}`}
+                      aria-label={isListening ? "Stop listening" : "Voice input"}
+                    >
+                      {isListening ? <FiMicOff className="w-3.5 h-3.5" /> : <FiMic className="w-3.5 h-3.5" />}
+                    </button>
+                    <textarea
+                      ref={inputRef}
+                      value={userMessage}
+                      onChange={(e) => { setUserMessage(e.target.value); adjustTextareaHeight(e.target); }}
+                      onKeyDown={handleKeyDown}
+                      placeholder={isListening ? "Listening..." : "Ask me anything about Idrissa..."}
+                      rows={1}
+                      className="flex-1 resize-none bg-transparent text-gray-200 text-sm placeholder-gray-500 outline-none leading-relaxed py-1.5"
+                      style={{ minHeight: "32px", maxHeight: "120px" }}
+                    />
+                    <button
+                      onClick={() => sendMessage(userMessage)}
+                      disabled={!userMessage.trim() || isTyping}
+                      className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-30 disabled:hover:bg-blue-600 cursor-pointer"
+                      aria-label="Send message"
+                    >
+                      <FiSend className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5 px-1">
+                    <button
+                      onClick={() => { setVoiceEnabled(v => !v); if (voiceEnabled) window.speechSynthesis?.cancel(); }}
+                      className={`flex items-center gap-1 text-[10px] cursor-pointer transition-colors ${voiceEnabled ? "text-blue-400" : "text-gray-600 hover:text-gray-400"}`}
+                    >
+                      {voiceEnabled ? <FiVolume2 className="w-3 h-3" /> : <FiVolumeX className="w-3 h-3" />}
+                      {voiceEnabled ? "Voice on" : "Voice off"}
+                    </button>
+                    <span className="text-[10px] text-gray-600">Enter to send</span>
                   </div>
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="shrink-0 px-3 py-3 border-t border-white/[0.08] bg-white/[0.02]">
-              <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-1.5">
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer ${isListening ? "bg-red-500/80 text-white animate-pulse" : "bg-white/[0.06] text-gray-400 hover:text-blue-400 hover:bg-blue-500/20"}`}
-                  aria-label={isListening ? "Stop listening" : "Voice input"}
-                >
-                  {isListening ? <FiMicOff className="w-3.5 h-3.5" /> : <FiMic className="w-3.5 h-3.5" />}
-                </button>
-                <textarea
-                  ref={inputRef}
-                  value={userMessage}
-                  onChange={(e) => { setUserMessage(e.target.value); adjustTextareaHeight(e.target); }}
-                  onKeyDown={handleKeyDown}
-                  placeholder={isListening ? "Listening..." : "Ask me anything about Idrissa..."}
-                  rows={1}
-                  className="flex-1 resize-none bg-transparent text-gray-200 text-sm placeholder-gray-500 outline-none leading-relaxed py-1.5"
-                  style={{ minHeight: "32px", maxHeight: "120px" }}
-                />
-                <button
-                  onClick={() => sendMessage(userMessage)}
-                  disabled={!userMessage.trim() || isTyping}
-                  className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-30 disabled:hover:bg-blue-600 cursor-pointer"
-                  aria-label="Send message"
-                >
-                  <FiSend className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <div className="flex items-center justify-between mt-1.5 px-1">
-                <button
-                  onClick={() => { setVoiceEnabled(v => !v); if (voiceEnabled) window.speechSynthesis?.cancel(); }}
-                  className={`flex items-center gap-1 text-[10px] cursor-pointer transition-colors ${voiceEnabled ? "text-blue-400" : "text-gray-600 hover:text-gray-400"}`}
-                >
-                  {voiceEnabled ? <FiVolume2 className="w-3 h-3" /> : <FiVolumeX className="w-3 h-3" />}
-                  {voiceEnabled ? "Voice on" : "Voice off"}
-                </button>
-                <span className="text-[10px] text-gray-600">Enter to send</span>
-              </div>
-            </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

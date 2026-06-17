@@ -59,7 +59,7 @@ export default function PrivacyPolicy() {
         <h2>Data Deletion</h2>
         <p>
           You can request deletion of your account and all associated data by contacting{" "}
-          <a href="mailto:maigadrisking@gmail.com">maigadrisking@gmail.com</a>. We will
+          <a href="mailto:idrissa.maiga@iditechs.com">idrissa.maiga@iditechs.com</a>. We will
           process deletion requests within 30 days.
         </p>
 
@@ -79,7 +79,7 @@ export default function PrivacyPolicy() {
         <h2>Contact</h2>
         <p>
           For questions about this privacy policy, contact{" "}
-          <a href="mailto:maigadrisking@gmail.com">maigadrisking@gmail.com</a>.
+          <a href="mailto:idrissa.maiga@iditechs.com">idrissa.maiga@iditechs.com</a>.
         </p>
 
         <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-800">
