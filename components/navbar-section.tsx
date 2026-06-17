@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { FiMenu, FiX, FiDownload, FiSun, FiMoon, FiUpload } from "react-icons/fi";
+import { FiMenu, FiX, FiDownload, FiSun, FiMoon, FiUpload, FiLogIn, FiLogOut } from "react-icons/fi";
 import { useTheme } from "./theme-provider";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 const navLinks = [
   { name: "Home", href: "#home" },
@@ -13,6 +14,7 @@ const navLinks = [
   { name: "Projects", href: "#projects" },
   { name: "Skills", href: "#skills" },
   { name: "Contact", href: "#contact" },
+  { name: "Blog", href: "/blog" },
 ];
 
 export default function Navbar() {
@@ -23,6 +25,7 @@ export default function Navbar() {
   const [uploadCode, setUploadCode] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { theme, setTheme } = useTheme();
+  const { data: session } = useSession();
 
   // Handle scroll events
   useEffect(() => {
@@ -202,6 +205,33 @@ export default function Navbar() {
             className="hidden"
           />
 
+          {/* Auth Button */}
+          {session ? (
+            <button
+              onClick={() => signOut()}
+              className="hidden sm:flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors touch-friendly"
+            >
+              {session.user?.image && (
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name || ""}
+                  width={20}
+                  height={20}
+                  className="rounded-full"
+                />
+              )}
+              <FiLogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => signIn("google")}
+              className="hidden sm:flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors touch-friendly"
+            >
+              <FiLogIn className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm font-medium">Sign In</span>
+            </button>
+          )}
+
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -270,6 +300,33 @@ export default function Navbar() {
                     onChange={handleFileSelect}
                     className="hidden"
                   />
+                </li>
+                <li>
+                  {session ? (
+                    <button
+                      onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                      className="flex items-center space-x-2 px-4 py-2 w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors touch-friendly"
+                    >
+                      {session.user?.image && (
+                        <Image
+                          src={session.user.image}
+                          alt={session.user.name || ""}
+                          width={20}
+                          height={20}
+                          className="rounded-full"
+                        />
+                      )}
+                      <span className="text-sm font-medium">Sign Out</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { signIn("google"); setMobileMenuOpen(false); }}
+                      className="flex items-center space-x-2 px-4 py-2 w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors touch-friendly"
+                    >
+                      <FiLogIn className="w-4 h-4" />
+                      <span className="text-sm font-medium">Sign In with Google</span>
+                    </button>
+                  )}
                 </li>
               </ul>
             </nav>

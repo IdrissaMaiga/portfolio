@@ -47,3 +47,6 @@ turbo/
 # Optional: Local Firebase or Supabase emulators
 .firebase/
 .supabase/
+
+.vercel
+.env*
