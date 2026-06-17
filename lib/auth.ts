@@ -2,6 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { db } from "./db";
 
+const OWNER_EMAIL = process.env.OWNER_EMAIL || "maigadrisking@gmail.com";
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -36,12 +38,14 @@ export const authOptions: NextAuthOptions = {
           select: { id: true },
         });
         if (dbUser) token.userId = dbUser.id;
+        token.isOwner = user.email === OWNER_EMAIL;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.userId) {
-        (session.user as { id?: string }).id = token.userId as string;
+        (session.user as { id?: string; isOwner?: boolean }).id = token.userId as string;
+        (session.user as { isOwner?: boolean }).isOwner = token.isOwner as boolean;
       }
       return session;
     },
