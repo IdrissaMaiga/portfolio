@@ -29,6 +29,10 @@ export async function GET() {
     weekViews,
     monthViews,
     activeSessions,
+    uniqueVisitorsToday,
+    uniqueVisitorsWeek,
+    uniqueVisitorsMonth,
+    uniqueVisitorsAllTime,
     totalComments,
     totalLikes,
     totalChatSessions,
@@ -47,6 +51,21 @@ export async function GET() {
     db.pageView.groupBy({
       by: ["sessionId"],
       where: { createdAt: { gte: activeThreshold } },
+    }).then((r) => r.length),
+    db.pageView.groupBy({
+      by: ["sessionId"],
+      where: { createdAt: { gte: todayStart } },
+    }).then((r) => r.length),
+    db.pageView.groupBy({
+      by: ["sessionId"],
+      where: { createdAt: { gte: weekStart } },
+    }).then((r) => r.length),
+    db.pageView.groupBy({
+      by: ["sessionId"],
+      where: { createdAt: { gte: monthStart } },
+    }).then((r) => r.length),
+    db.pageView.groupBy({
+      by: ["sessionId"],
     }).then((r) => r.length),
     db.comment.count(),
     db.like.count(),
@@ -94,6 +113,12 @@ export async function GET() {
       todayViews,
       weekViews,
       monthViews,
+      uniqueVisitors: {
+        today: uniqueVisitorsToday,
+        week: uniqueVisitorsWeek,
+        month: uniqueVisitorsMonth,
+        allTime: uniqueVisitorsAllTime,
+      },
     },
     engagement: {
       totalComments,

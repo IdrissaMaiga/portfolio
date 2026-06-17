@@ -27,6 +27,12 @@ interface Stats {
     todayViews: number;
     weekViews: number;
     monthViews: number;
+    uniqueVisitors: {
+      today: number;
+      week: number;
+      month: number;
+      allTime: number;
+    };
   };
   engagement: {
     totalComments: number;
@@ -206,17 +212,19 @@ export default function StatsPage() {
           </span>
         </div>
 
-        {/* Overview Cards */}
+        {/* Traffic Overview */}
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Traffic</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <StatCard icon={FiUsers} label="Total Users" value={stats.overview.totalUsers} color="bg-blue-500/10 text-blue-400" />
-          <StatCard icon={FiActivity} label="Active Now" value={stats.overview.activeSessions} color="bg-green-500/10 text-green-400" />
-          <StatCard icon={FiEye} label="Today" value={stats.overview.todayViews} color="bg-purple-500/10 text-purple-400" />
-          <StatCard icon={FiCalendar} label="This Week" value={stats.overview.weekViews} color="bg-indigo-500/10 text-indigo-400" />
-          <StatCard icon={FiTrendingUp} label="This Month" value={stats.overview.monthViews} color="bg-cyan-500/10 text-cyan-400" />
-          <StatCard icon={FiBarChart2} label="All Time" value={stats.overview.totalPageViews} color="bg-orange-500/10 text-orange-400" />
+          <StatCard icon={FiUsers} label="Registered Users" value={stats.overview.totalUsers} color="bg-blue-500/10 text-blue-400" />
+          <StatCard icon={FiActivity} label="Active Now" value={stats.overview.activeSessions} sub="Last 15 minutes" color="bg-green-500/10 text-green-400" />
+          <StatCard icon={FiEye} label="Views Today" value={stats.overview.todayViews} sub={`${stats.overview.uniqueVisitors.today} unique visitors`} color="bg-purple-500/10 text-purple-400" />
+          <StatCard icon={FiCalendar} label="Views This Week" value={stats.overview.weekViews} sub={`${stats.overview.uniqueVisitors.week} unique visitors`} color="bg-indigo-500/10 text-indigo-400" />
+          <StatCard icon={FiTrendingUp} label="Views This Month" value={stats.overview.monthViews} sub={`${stats.overview.uniqueVisitors.month} unique visitors`} color="bg-cyan-500/10 text-cyan-400" />
+          <StatCard icon={FiBarChart2} label="All Time Views" value={stats.overview.totalPageViews} sub={`${stats.overview.uniqueVisitors.allTime} unique visitors`} color="bg-orange-500/10 text-orange-400" />
         </div>
 
         {/* Engagement Cards */}
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Engagement</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <StatCard icon={FiHeart} label="Total Likes" value={stats.engagement.totalLikes} color="bg-red-500/10 text-red-400" />
           <StatCard icon={FiMessageSquare} label="Comments" value={stats.engagement.totalComments} color="bg-yellow-500/10 text-yellow-400" />
