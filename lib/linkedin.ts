@@ -1,4 +1,4 @@
-import { prisma } from './prisma';
+import { db } from './db';
 
 interface LinkedInToken {
   access_token: string;
@@ -10,7 +10,7 @@ const TOKEN_KEY = 'linkedin_token';
 
 export async function getLinkedInToken(): Promise<string | null> {
   try {
-    const setting = await prisma.appSetting.findUnique({ where: { key: TOKEN_KEY } });
+    const setting = await db.appSetting.findUnique({ where: { key: TOKEN_KEY } });
     if (!setting) return null;
     const data: LinkedInToken = JSON.parse(setting.value);
     if (Date.now() > data.expires_at) return null;
@@ -26,7 +26,7 @@ export async function saveLinkedInToken(access_token: string, expires_in: number
     expires_at: Date.now() + expires_in * 1000,
     refresh_token,
   };
-  await prisma.appSetting.upsert({
+  await db.appSetting.upsert({
     where: { key: TOKEN_KEY },
     update: { value: JSON.stringify(data) },
     create: { key: TOKEN_KEY, value: JSON.stringify(data) },
