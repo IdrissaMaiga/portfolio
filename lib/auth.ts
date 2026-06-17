@@ -38,13 +38,15 @@ export const authOptions: NextAuthOptions = {
           select: { id: true },
         });
         if (dbUser) token.userId = dbUser.id;
-        token.isOwner = user.email === OWNER_EMAIL;
       }
+      token.isOwner = (token.email ?? user?.email) === OWNER_EMAIL;
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.userId) {
-        (session.user as { id?: string; isOwner?: boolean }).id = token.userId as string;
+      if (session.user) {
+        if (token.userId) {
+          (session.user as { id?: string }).id = token.userId as string;
+        }
         (session.user as { isOwner?: boolean }).isOwner = token.isOwner as boolean;
       }
       return session;
