@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Navbar from "@/components/navbar-section";
-import Footer from "@/components/footer";
+
+
 
 export const metadata = {
   title: "Terms of Service | Idrissa Maiga",
@@ -8,8 +8,6 @@ export const metadata = {
 
 export default function TermsOfService() {
   return (
-    <>
-    <Navbar />
     <main className="min-h-screen bg-white dark:bg-gray-950 pt-24 pb-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl prose prose-gray dark:prose-invert">
         <h1>Terms of Service</h1>
@@ -81,7 +79,5 @@ export default function TermsOfService() {
         </div>
       </div>
     </main>
-    <Footer />
-    </>
   );
 }

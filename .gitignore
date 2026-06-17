@@ -48,5 +48,10 @@ turbo/
 .firebase/
 .supabase/
 
+# LinkedIn OAuth token
+.linkedin-token.json
+
+# MCP server compiled output
+mcp-server/*.js
+
 .vercel
-.env*

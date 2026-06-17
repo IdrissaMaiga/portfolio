@@ -3,6 +3,9 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import SessionProvider from "@/components/session-provider";
+import ChatButton from "@/components/chat-button";
+import ActionListener from "@/components/action-listener";
+import Navbar from "@/components/navbar-section";
 
 // Font configuration with responsive weights
 const inter = Inter({
@@ -23,20 +26,45 @@ const spaceGrotesk = Space_Grotesk({
 
 // Metadata
 export const metadata: Metadata = {
-  title: "Idrissa Maiga | Full-Stack Developer",
+  title: "Idrissa Maiga | Full-Stack Engineer",
   description:
-    "Portfolio of Idrissa Maiga, a Full-Stack Developer specializing in Java, Spring Boot, React, and modern web technologies.",
+    "Full-Stack Engineer specializing in Java, TypeScript, Python, and AI-powered solutions. Building scalable applications with Spring Boot, React, Next.js, and cloud-native technologies. Based in Budapest, Hungary.",
   keywords: [
-    "Java Developer",
-    "Spring Boot",
-    "React.js",
     "Full-Stack Developer",
     "Software Engineer",
-    "Portfolio",
-    "Programming",
+    "Java Developer",
+    "TypeScript",
+    "React",
+    "Next.js",
+    "Spring Boot",
+    "AI Engineer",
+    "Budapest",
+    "Idrissa Maiga",
   ],
-  authors: [{ name: "Idrissa Maiga" }],
+  authors: [{ name: "Idrissa Maiga", url: "https://idrissamaiga.iditechs.com" }],
   creator: "Idrissa Maiga",
+  metadataBase: new URL("https://idrissamaiga.iditechs.com"),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://idrissamaiga.iditechs.com",
+    siteName: "Idrissa Maiga — Portfolio",
+    title: "Idrissa Maiga | Full-Stack Engineer",
+    description:
+      "Full-Stack Engineer building scalable applications with Java, TypeScript, and AI. Based in Budapest.",
+    images: [{ url: "/logos/id_.jpg", width: 400, height: 400, alt: "Idrissa Maiga" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Idrissa Maiga | Full-Stack Engineer",
+    description:
+      "Full-Stack Engineer building scalable applications with Java, TypeScript, and AI. Based in Budapest.",
+    creator: "@a_idrissamaiga",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 // Viewport export
@@ -46,8 +74,33 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#1f2937" },
+    { media: "(prefers-color-scheme: dark)", color: "#030712" },
   ],
+};
+
+// JSON-LD structured data
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Idrissa Maiga",
+  jobTitle: "Full-Stack Engineer",
+  url: "https://idrissamaiga.iditechs.com",
+  email: "idrissa.maiga@iditechs.com",
+  sameAs: [
+    "https://github.com/IdrissaMaiga",
+    "https://www.linkedin.com/in/idrissa-maiga-16581b245/",
+    "https://x.com/a_idrissamaiga",
+  ],
+  knowsAbout: ["Java", "TypeScript", "Python", "React", "Next.js", "Spring Boot", "AI/ML"],
+  alumniOf: {
+    "@type": "CollegeOrUniversity",
+    name: "Óbuda University",
+  },
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Budapest",
+    addressCountry: "Hungary",
+  },
 };
 
 export default function RootLayout({
@@ -56,17 +109,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="scroll-smooth">
+    <html lang="en" suppressHydrationWarning className="scroll-smooth dark">
       <head>
         {/* Favicon with responsive support */}
         <link rel="icon" href="/favicon.ico" />
         {/* Preconnect to Google Fonts */}
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* RSS Feed */}
+        <link rel="alternate" type="application/rss+xml" title="Idrissa Maiga Blog" href="/api/feed" />
+        {/* JSON-LD structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <SessionProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+            <Navbar />
             {children}
+            <ChatButton />
+            <ActionListener />
           </ThemeProvider>
         </SessionProvider>
       </body>

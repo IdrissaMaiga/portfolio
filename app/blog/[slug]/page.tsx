@@ -1,80 +1,119 @@
-import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getAllPosts, getPostBySlug } from "@/lib/blog";
+import remarkGfm from "remark-gfm";
+import { getPostBySlug } from "@/lib/blog";
+import { components } from "@/components/blog/mdx-components";
+import BlogHeader from "@/components/blog/blog-header";
 import Comments from "@/components/comments";
 import LikeButton from "@/components/like-button";
+import { FiArrowLeft } from "react-icons/fi";
 
-export async function generateStaticParams() {
-  return getAllPosts().map((post) => ({ slug: post.slug }));
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const post = getPostBySlug(params.slug);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
   if (!post) return { title: "Post Not Found" };
+
   return {
     title: `${post.title} | Idrissa Maiga`,
     description: post.description,
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      type: "article",
+      url: `https://idrissamaiga.iditechs.com/blog/${slug}`,
+      publishedTime: post.date,
+      authors: ["Idrissa Maiga"],
+      tags: post.tags,
+      ...(post.image && { images: [{ url: post.image }] }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
+      ...(post.image && { images: [post.image] }),
+    },
   };
 }
 
-export default function BlogPostPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const post = getPostBySlug(params.slug);
+export default async function BlogPostPage({ params }: PageProps) {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
   if (!post) notFound();
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-950 pt-24 pb-16">
-      <article className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
-        <Link
-          href="/blog"
-          className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
-        >
-          &larr; Back to blog
-        </Link>
+    <main className="min-h-screen bg-[#030712] relative overflow-hidden">
+      {/* Ambient glow blobs */}
+      <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-600/[0.06] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-600/[0.08] rounded-full blur-[120px] pointer-events-none" />
 
-        <header className="mt-6 mb-8">
-          <time className="text-sm text-gray-400 dark:text-gray-500">
-            {new Date(post.date).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </time>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mt-2">
-            {post.title}
-          </h1>
-          {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                >
-                  {tag}
-                </span>
-              ))}
+      {/* Subtle grid */}
+      <div
+        className="absolute inset-0 opacity-[0.015] pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 pb-16 sm:pb-24 relative z-10">
+        <div className="max-w-3xl mx-auto">
+          {/* Back link */}
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 mb-8 group"
+          >
+            <FiArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            Back to blog
+          </Link>
+
+          {/* Post header */}
+          <BlogHeader post={post} />
+
+          {/* Cover image */}
+          {post.image && (
+            <div className="relative w-full h-[200px] sm:h-[300px] md:h-[400px] rounded-2xl overflow-hidden my-8 border border-white/[0.06]">
+              <img
+                src={post.image}
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
-        </header>
 
-        <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:font-semibold prose-a:text-blue-600 dark:prose-a:text-blue-400">
-          <MDXRemote source={post.content} />
+          {/* MDX content */}
+          <article className="prose-invert max-w-none">
+            <MDXRemote source={post.content} components={components} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
+          </article>
+
+          {/* Like button */}
+          <div className="mt-10 flex items-center gap-4">
+            <LikeButton postSlug={slug} />
+          </div>
+
+          {/* Comments */}
+          <Comments postSlug={slug} />
+
+          {/* Bottom back link */}
+          <div className="mt-16 pt-8 border-t border-white/[0.06]">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 group"
+            >
+              <FiArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              Back to all posts
+            </Link>
+          </div>
         </div>
-
-        <div className="mt-8 flex items-center gap-4">
-          <LikeButton postSlug={post.slug} />
-        </div>
-
-        <Comments postSlug={post.slug} />
-      </article>
+      </div>
     </main>
   );
 }

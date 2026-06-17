@@ -1,20 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  FiMessageCircle,
-  FiSend,
-  FiX,
-  FiUser,
-  FiCode,
-  FiTerminal,
-  FiClipboard,
-  FiCheckCircle,
-  FiTrash2,
-  FiMaximize,
-  FiMinimize,
-} from "react-icons/fi";
+import { FiMessageCircle, FiSend, FiX, FiMinus, FiMic, FiMicOff, FiVolume2, FiVolumeX } from "react-icons/fi";
 
 interface Message {
   text: string;
@@ -25,549 +13,627 @@ interface Message {
   fullText?: string;
 }
 
+const suggestions = [
+  "Show me your projects",
+  "What's your tech stack?",
+  "How can I contact you?",
+  "Tell me about your experience",
+];
+
 export default function ChatButton() {
-  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [userMessage, setUserMessage] = useState<string>("");
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [userMessage, setUserMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    {
-      text: "Hello! I'm Idrissa's assistant. How can I help you today?",
-      sender: "AI",
-      timestamp: Date.now(),
-    },
+    { text: "Hello! I'm Idrissa's AI assistant. Ask me anything about his work, skills, or projects.", sender: "AI", timestamp: Date.now() },
   ]);
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [showCopied, setShowCopied] = useState(false);
-  const [fontSize, setFontSize] = useState<number>(14); // Default font size
-  const [hasUnreadMessage, setHasUnreadMessage] = useState<boolean>(true);
+  const [isTyping, setIsTyping] = useState(false);
+  const [hasUnreadMessage, setHasUnreadMessage] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const chatHistory = useRef<HTMLDivElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const chatHistory = useRef<HTMLDivElement>(null);
   const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isChatOpenRef = useRef(isChatOpen);
+  const voiceEnabledRef = useRef(voiceEnabled);
+  const isStreamingRef = useRef(false);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load messages from localStorage on mount
+  useEffect(() => { isChatOpenRef.current = isChatOpen; }, [isChatOpen]);
+  useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
+
+  // Load messages from localStorage (filter out broken streaming state)
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const savedMessages = localStorage.getItem("chatMessages");
-    if (savedMessages) {
+    const saved = localStorage.getItem("chatMessages");
+    if (saved) {
       try {
-        setMessages(JSON.parse(savedMessages));
-      } catch (e) {
-        console.error("Failed to parse saved messages", e);
-      }
-    }
-
-    // Load font size preference if available
-    const savedFontSize = localStorage.getItem("chatFontSize");
-    if (savedFontSize) {
-      setFontSize(parseInt(savedFontSize));
+        const parsed: Message[] = JSON.parse(saved);
+        const clean = parsed
+          .map(m => ({ ...m, isStreaming: false, fullText: undefined, text: m.fullText || m.text }))
+          .filter(m => m.text && m.text.trim() !== "");
+        if (clean.length > 0) setMessages(clean);
+      } catch { /* ignore corrupt data */ }
     }
   }, []);
 
-  // Save messages to localStorage when they change
+  // Save to localStorage only when NOT streaming
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const completedMessages = messages.map((msg) => ({
-        ...msg,
-        text: msg.fullText || msg.text,
-        isStreaming: false,
-        fullText: undefined,
-      }));
-      localStorage.setItem("chatMessages", JSON.stringify(completedMessages));
-    }
+    if (isStreamingRef.current) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const completed = messages
+          .map((msg) => ({
+            text: msg.fullText || msg.text,
+            sender: msg.sender,
+            timestamp: msg.timestamp,
+            code: msg.code,
+          }))
+          .filter(m => m.text && m.text.trim() !== "");
+        localStorage.setItem("chatMessages", JSON.stringify(completed));
+      }
+    }, 300);
   }, [messages]);
 
-  // Save font size preference
+  // Scroll to bottom (debounced during streaming)
+  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("chatFontSize", fontSize.toString());
-    }
-  }, [fontSize]);
-
-  // Scroll to the latest message
-  useEffect(() => {
-    if (messagesEndRef.current) weakenAnimation(() => {
-      messagesEndRef.current!.scrollIntoView({ behavior: "smooth" });
-    });
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, isStreamingRef.current ? 200 : 0);
   }, [messages]);
 
-  // Focus the input when chat is opened
   useEffect(() => {
-    if (isChatOpen) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 300);
+    if (isChatOpen && !isMinimized) {
+      setTimeout(() => inputRef.current?.focus(), 300);
       setHasUnreadMessage(false);
     }
-  }, [isChatOpen]);
+  }, [isChatOpen, isMinimized]);
 
-  // Clean up streaming timer on unmount
   useEffect(() => {
     return () => {
-      if (streamingTimerRef.current) {
-        clearTimeout(streamingTimerRef.current);
-      }
+      if (streamingTimerRef.current) clearTimeout(streamingTimerRef.current);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
     };
   }, []);
 
-  // Adjust textarea height based on content
-  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`; // Reduced max height for mobile
+  // Voice input
+  const startListening = () => {
+    if (typeof window === "undefined") return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+
+    const recognition = new SR();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = "";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript;
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+      if (inputRef.current) {
+        inputRef.current.value = (finalTranscript + interim).trim();
+        setUserMessage((finalTranscript + interim).trim());
+      }
+    };
+
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => {
+      setIsListening(false);
+      const text = finalTranscript.trim();
+      if (text) sendMessage(text);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
   };
 
-  const toggleChat = () => setIsChatOpen((prev) => !prev);
-
-  const toggleFullscreen = () => setIsFullscreen((prev) => !prev);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setUserMessage(e.target.value);
-    adjustTextareaHeight(e.target);
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
   };
 
-  // Handle keyboard shortcuts
+  // Voice output - speaks complete text ONCE after streaming finishes
+  const speakText = useCallback((text: string) => {
+    if (!voiceEnabledRef.current || typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+
+    const clean = text.replace(/```[\s\S]*?```/g, "code block").replace(/[*_#`]/g, "").replace(/\n+/g, ". ");
+
+    // Chrome bug: long utterances get stuck. Split into chunks.
+    const chunks = clean.match(/.{1,200}[.!?,;:]?\s*/g) || [clean];
+
+    chunks.forEach((chunk, i) => {
+      const utterance = new SpeechSynthesisUtterance(chunk.trim());
+      utterance.rate = 1.1;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;
+      if (i === 0) {
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = voices.find(v => v.lang.startsWith("en") && v.name.includes("Google")) || voices.find(v => v.lang.startsWith("en"));
+        if (preferred) utterance.voice = preferred;
+      }
+      window.speechSynthesis.speak(utterance);
+    });
+  }, []);
+
+  const adjustTextareaHeight = (el: HTMLTextAreaElement) => {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  };
+
+  const toggleChat = () => {
+    if (isChatOpen) { setIsChatOpen(false); setIsMinimized(false); }
+    else { setIsChatOpen(true); setIsMinimized(false); }
+  };
+
+  const handleMinimize = () => { setIsMinimized(true); setIsChatOpen(false); };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      const val = inputRef.current?.value || userMessage;
+      if (val.trim()) sendMessage(val);
     }
   };
 
-  // Copy chat history
-  const copyChat = () => {
-    if (typeof window === "undefined" || !chatHistory.current) return;
-
-    const chatText = messages
-      .map((msg) => `${msg.sender}: ${msg.fullText || msg.text}`)
-      .join("\n\n");
-
-    navigator.clipboard.writeText(chatText);
-    setShowCopied(true);
-    setTimeout(() => setShowCopied(false), 2000);
-  };
-
-  // Clear chat history
-  const clearChat = () => {
-    const initialMessage: Message = {
-      text: "Chat history cleared. How can I help you today?",
-      sender: "AI",
-      timestamp: Date.now(),
-    };
-    setMessages([initialMessage]);
-  };
-
-  // Increase font size
-  const increaseFontSize = () => {
-    setFontSize((prev) => Math.min(prev + 2, 20)); // Reduced max font size for mobile
-  };
-
-  // Decrease font size
-  const decreaseFontSize = () => {
-    setFontSize((prev) => Math.max(prev - 2, 12)); // Min font size
-  };
-
-  // Format timestamp
-  const formatTime = (timestamp: number): string => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
+  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   // Stream text character by character
-  const streamText = (fullText: string, messageIndex: number) => {
-    let currentIndex = 0;
-    const streamingSpeed = 30;
-    const punctuationPause = 150;
+  const streamText = useCallback((fullText: string, messageIndex: number) => {
+    let idx = 0;
+    isStreamingRef.current = true;
 
-    const streamNextChar = () => {
-      if (currentIndex <= fullText.length) {
-        setMessages((prevMessages) => {
-          const updatedMessages = [...prevMessages];
-          updatedMessages[messageIndex] = {
-            ...updatedMessages[messageIndex],
-            text: fullText.substring(0, currentIndex),
-            fullText: fullText,
-            isStreaming: currentIndex < fullText.length,
+    const tick = () => {
+      if (idx <= fullText.length) {
+        setMessages((prev) => {
+          const updated = [...prev];
+          if (!updated[messageIndex]) return prev;
+          updated[messageIndex] = {
+            ...updated[messageIndex],
+            text: fullText.substring(0, idx),
+            fullText,
+            isStreaming: idx < fullText.length,
           };
-          return updatedMessages;
+          return updated;
         });
-
-        currentIndex++;
-        const delay =
-          currentIndex > 1 && /[.,!?;:]/.test(fullText[currentIndex - 2])
-            ? punctuationPause
-            : streamingSpeed;
-        streamingTimerRef.current = setTimeout(streamNextChar, delay);
+        idx++;
+        const delay = idx > 1 && /[.,!?;:]/.test(fullText[idx - 2]) ? 120 : 25;
+        streamingTimerRef.current = setTimeout(tick, delay);
       } else {
-        setMessages((prevMessages) => {
-          const updatedMessages = [...prevMessages];
-          updatedMessages[messageIndex] = {
-            ...updatedMessages[messageIndex],
-            isStreaming: false,
-          };
-          return updatedMessages;
+        streamingTimerRef.current = null;
+        isStreamingRef.current = false;
+        setMessages((prev) => {
+          const updated = [...prev];
+          if (!updated[messageIndex]) return prev;
+          updated[messageIndex] = { ...updated[messageIndex], isStreaming: false };
+          return updated;
         });
+        speakText(fullText);
       }
     };
 
-    streamNextChar();
-  };
+    tick();
+  }, [speakText]);
 
-  const handleSendMessage = async () => {
-    if (!userMessage.trim()) return;
+  const sendMessage = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || isTyping) return;
 
-    const userMsg: Message = {
-      text: userMessage,
-      sender: "User",
-      timestamp: Date.now(),
-    };
+    if (streamingTimerRef.current) {
+      clearTimeout(streamingTimerRef.current);
+      streamingTimerRef.current = null;
+      isStreamingRef.current = false;
+    }
+    window.speechSynthesis?.cancel();
 
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    const userMsg: Message = { text: trimmed, sender: "User", timestamp: Date.now() };
+    setMessages(prev => [...prev, userMsg]);
     setUserMessage("");
     setIsTyping(true);
-
-    if (inputRef.current) {
-      inputRef.current.style.height = "auto";
-    }
+    if (inputRef.current) inputRef.current.style.height = "auto";
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000);
+
       const response = await fetch("/api/ai", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userCommand: userMessage }),
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          userCommand: trimmed,
+          history: messages.slice(-8).map(m => ({ sender: m.sender, text: m.fullText || m.text })),
+        }),
       });
+      clearTimeout(timeout);
 
-      if (!response.ok) {
-        throw new Error("Failed to get AI response");
-      }
-
+      if (!response.ok) throw new Error(`${response.status}`);
       const data = await response.json();
 
-      if (!data.response) {
-        throw new Error("Invalid response format");
+      const aiText = data.response || (data.action ? "Done!" : "How can I help?");
+
+      if (data.action) {
+        const navActions = ["navigate_to_section", "show_project", "get_contact_info", "highlight_skill", "show_stats"];
+        if (navActions.includes(data.action.type)) {
+          setTimeout(() => { setIsChatOpen(false); setIsMinimized(true); }, 800);
+        }
+        setTimeout(() => {
+          try {
+            window.dispatchEvent(new CustomEvent("portfolio-action", { detail: data.action }));
+          } catch (err) { console.error("Action dispatch failed:", err); }
+        }, 400);
       }
 
-      const containsCode =
-        userMessage.toLowerCase().includes("code") ||
-        userMessage.toLowerCase().includes("example") ||
-        data.response.includes("```");
+      const containsCode = trimmed.toLowerCase().includes("code") || trimmed.toLowerCase().includes("example") || aiText.includes("```");
 
-      const aiResponseIndex = newMessages.length;
-      setMessages([
-        ...newMessages,
-        {
-          text: "",
-          fullText: data.response,
-          sender: "AI",
-          timestamp: Date.now(),
-          code: containsCode,
-          isStreaming: true,
-        },
-      ]);
-
-      if (!isChatOpen) {
-        setHasUnreadMessage(true);
-      }
+      let aiIdx = -1;
+      setMessages(prev => {
+        aiIdx = prev.length;
+        return [...prev, {
+          text: "", fullText: aiText, sender: "AI" as const,
+          timestamp: Date.now(), code: containsCode, isStreaming: true,
+        }];
+      });
 
       setTimeout(() => {
-        streamText(data.response, aiResponseIndex);
-      }, 500);
-    } catch (error) {
-      console.error("Error processing message:", error);
-      setMessages([
-        ...newMessages,
-        {
-          text: "Sorry, I encountered an error processing your request. Please try again later.",
-          sender: "AI",
-          timestamp: Date.now(),
-        },
-      ]);
+        if (aiIdx >= 0) streamText(aiText, aiIdx);
+      }, 300);
 
-      if (!isChatOpen) {
-        setHasUnreadMessage(true);
-      }
+      if (!isChatOpenRef.current) setHasUnreadMessage(true);
+    } catch (error) {
+      const msg = error instanceof Error && error.name === "AbortError"
+        ? "Request timed out. Please try again."
+        : "Something went wrong. Please try again.";
+      setMessages(prev => [...prev, { text: msg, sender: "AI", timestamp: Date.now() }]);
+      if (!isChatOpenRef.current) setHasUnreadMessage(true);
     } finally {
       setIsTyping(false);
     }
   };
 
-  // Render message content with code formatting
-  const renderMessageContent = (message: Message) => {
-    const textToRender = message.text;
+  const renderMarkdown = (text: string): React.ReactNode[] => {
+    const nodes: React.ReactNode[] = [];
+    const lines = text.split("\n");
+    let i = 0;
 
-    const cursorElement = message.isStreaming ? (
-      <span className="inline-block w-2 h-4 ml-0.5 bg-blue-400 dark:bg-blue-300 animate-pulse"></span>
-    ) : null;
+    while (i < lines.length) {
+      const line = lines[i];
 
-    if (message.code && textToRender.includes("```")) {
-      return (
-        <div className="whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
-          {textToRender.split(/(```[\s\S]*?```)/g).map((part, i) => {
-            if (part.startsWith("```") && part.endsWith("```")) {
-              const match = part.match(/```(.+?)\n([\s\S]*?)```/);
-              if (match) {
-                const [, lang, code] = match;
-                return (
-                  <div key={i}>
-                    <div className="mt-2 mb-1 text-xs font-semibold text-gray-200">{lang}</div>
-                    <div
-                      className="bg-gray-800 text-gray-100 p-2 sm:p-3 rounded-md font-mono overflow-x-auto"
-                      style={{ fontSize: `${Math.max(fontSize - 2, 10)}px` }}
-                    >
-                      {code.replace(/</g, "<").replace(/>/g, ">")}
-                    </div>
-                  </div>
-                );
-              }
-              return <span key={i}>{part}</span>;
-            }
-            return <span key={i}>{part}</span>;
-          })}
-          {cursorElement}
-        </div>
-      );
+      // Code blocks
+      if (line.startsWith("```")) {
+        const lang = line.slice(3).trim();
+        const codeLines: string[] = [];
+        i++;
+        while (i < lines.length && !lines[i].startsWith("```")) {
+          codeLines.push(lines[i]);
+          i++;
+        }
+        if (i < lines.length) i++; // skip closing ```
+        nodes.push(
+          <div key={`code-${i}`} className="my-2">
+            {lang && <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-1 font-medium">{lang}</div>}
+            <div className="bg-black/40 text-gray-200 p-3 rounded-lg font-mono text-xs overflow-x-auto border border-white/[0.06] whitespace-pre">
+              {codeLines.join("\n")}
+            </div>
+          </div>
+        );
+        continue;
+      }
+
+      // Tables (detect | at start)
+      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+        const tableRows: string[] = [];
+        while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+          tableRows.push(lines[i]);
+          i++;
+        }
+        const parseRow = (row: string) => row.split("|").slice(1, -1).map(c => c.trim());
+        const header = parseRow(tableRows[0]);
+        const isSeparator = (r: string) => /^\|[\s\-:|]+\|$/.test(r.trim());
+        const dataStart = tableRows.length > 1 && isSeparator(tableRows[1]) ? 2 : 1;
+        const bodyRows = tableRows.slice(dataStart).map(parseRow);
+
+        nodes.push(
+          <div key={`table-${i}`} className="my-2 overflow-x-auto rounded-lg border border-white/[0.08]">
+            <table className="w-full text-xs">
+              <thead className="bg-white/[0.05]">
+                <tr>{header.map((h, j) => <th key={j} className="px-2 py-1.5 text-left font-semibold text-gray-200">{renderInline(h)}</th>)}</tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.06]">
+                {bodyRows.map((row, ri) => (
+                  <tr key={ri} className="hover:bg-white/[0.02]">
+                    {row.map((cell, ci) => <td key={ci} className="px-2 py-1.5 text-gray-300">{renderInline(cell)}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+        continue;
+      }
+
+      // Headers
+      const headerMatch = line.match(/^(#{1,4})\s+(.+)/);
+      if (headerMatch) {
+        const level = headerMatch[1].length;
+        const sizes = ["text-base font-bold", "text-sm font-bold", "text-sm font-semibold", "text-xs font-semibold"];
+        nodes.push(<div key={`h-${i}`} className={`${sizes[level - 1]} text-white mt-2 mb-1`}>{renderInline(headerMatch[2])}</div>);
+        i++;
+        continue;
+      }
+
+      // Unordered list items
+      if (/^[\s]*[-*]\s/.test(line)) {
+        const listItems: string[] = [];
+        while (i < lines.length && /^[\s]*[-*]\s/.test(lines[i])) {
+          listItems.push(lines[i].replace(/^[\s]*[-*]\s/, ""));
+          i++;
+        }
+        nodes.push(
+          <ul key={`ul-${i}`} className="my-1 pl-3 space-y-0.5">
+            {listItems.map((item, j) => <li key={j} className="text-gray-300 flex gap-1.5 items-start"><span className="text-blue-400 mt-1.5 shrink-0 w-1 h-1 rounded-full bg-blue-400 inline-block" /><span>{renderInline(item)}</span></li>)}
+          </ul>
+        );
+        continue;
+      }
+
+      // Numbered list items
+      if (/^\d+[.)]\s/.test(line)) {
+        const listItems: string[] = [];
+        while (i < lines.length && /^\d+[.)]\s/.test(lines[i])) {
+          listItems.push(lines[i].replace(/^\d+[.)]\s/, ""));
+          i++;
+        }
+        nodes.push(
+          <ol key={`ol-${i}`} className="my-1 pl-3 space-y-0.5">
+            {listItems.map((item, j) => <li key={j} className="text-gray-300 flex gap-1.5 items-start"><span className="text-blue-400 text-xs font-medium shrink-0 w-4">{j + 1}.</span><span>{renderInline(item)}</span></li>)}
+          </ol>
+        );
+        continue;
+      }
+
+      // Empty line = paragraph break
+      if (!line.trim()) {
+        nodes.push(<div key={`br-${i}`} className="h-2" />);
+        i++;
+        continue;
+      }
+
+      // Regular paragraph
+      nodes.push(<div key={`p-${i}`} className="text-gray-200">{renderInline(line)}</div>);
+      i++;
     }
 
+    return nodes;
+  };
+
+  const renderInline = (text: string): React.ReactNode => {
+    const parts: React.ReactNode[] = [];
+    const regex = /(\*\*(.+?)\*\*)|(`([^`]+)`)|(\[([^\]]+)\]\(([^)]+)\))/g;
+    let lastIdx = 0;
+    let match: RegExpExecArray | null;
+    let key = 0;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(<span key={key++}>{text.slice(lastIdx, match.index)}</span>);
+      }
+      if (match[2]) {
+        parts.push(<strong key={key++} className="text-white font-semibold">{match[2]}</strong>);
+      } else if (match[4]) {
+        parts.push(<code key={key++} className="px-1 py-0.5 rounded bg-white/[0.08] text-cyan-300 text-[0.85em] font-mono">{match[4]}</code>);
+      } else if (match[6] && match[7]) {
+        parts.push(<a key={key++} href={match[7]} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline underline-offset-2">{match[6]}</a>);
+      }
+      lastIdx = match.index + match[0].length;
+    }
+    if (lastIdx < text.length) {
+      parts.push(<span key={key++}>{text.slice(lastIdx)}</span>);
+    }
+    return parts.length > 0 ? parts : text;
+  };
+
+  const renderMessageContent = (message: Message) => {
+    const textToRender = message.text;
+    const cursor = message.isStreaming ? (
+      <span className="inline-block w-0.5 h-4 ml-0.5 bg-blue-400 animate-blink align-middle" />
+    ) : null;
+
     return (
-      <div className="whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
-        {textToRender}
-        {cursorElement}
+      <div className="text-sm leading-relaxed">
+        {renderMarkdown(textToRender)}
+        {cursor}
       </div>
     );
   };
 
-  // Weaken animations for mobile devices
-  const weakenAnimation = (callback: () => void) => {
-    if (typeof window === "undefined" || window.innerWidth < 640) {
-      // Reduce animation intensity or skip for mobile
-      callback();
-    } else {
-      callback();
-    }
-  };
+  const showSuggestions = messages.length <= 1 && !isTyping;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      {/* Chat Button with notification badge */}
-      <motion.button
-        onClick={toggleChat}
-        className="fixed bottom-4 right-4 z-50 p-3 sm:p-4 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20, delay: 1 }}
-        aria-label="Open chat"
-        style={{ boxShadow: "0 0 15px rgba(37, 99, 235, 0.5)" }}
-      >
-        <FiMessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-        {hasUnreadMessage && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-            1
-          </span>
-        )}
-      </motion.button>
+    <>
+      <AnimatePresence>
+        {!isChatOpen && (() => {
+          const lastAI = [...messages].reverse().find(m => m.sender === "AI" && (m.fullText || m.text));
+          const preview = lastAI ? (lastAI.fullText || lastAI.text).replace(/[*#`_\[\]]/g, "").replace(/\n+/g, " ").trim() : "";
+          const showPreview = preview && preview !== "Hello! I'm Idrissa's AI assistant. Ask me anything about his work, skills, or projects.";
 
-      {/* Chat Panel */}
+          return (
+            <motion.div
+              className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
+            >
+              {/* Latest message preview bubble */}
+              {showPreview && hasUnreadMessage && (
+                <motion.div
+                  onClick={toggleChat}
+                  className="max-w-[260px] px-3.5 py-2.5 rounded-2xl rounded-br-sm bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/[0.1] text-gray-300 text-xs leading-relaxed cursor-pointer hover:border-blue-500/30 transition-colors shadow-lg shadow-black/30"
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.8, type: "spring", stiffness: 300, damping: 25 }}
+                >
+                  <div className="line-clamp-2">{preview.length > 120 ? preview.slice(0, 120) + "..." : preview}</div>
+                  <div className="text-[10px] text-blue-400/60 mt-1">Tap to continue</div>
+                </motion.div>
+              )}
+
+              {/* Chat button */}
+              <motion.button
+                onClick={toggleChat}
+                className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-blue-600/90 backdrop-blur-md border border-blue-400/20 text-white font-medium text-sm shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-shadow cursor-pointer select-none relative"
+                whileHover={{ scale: 1.05 }}
+                aria-label="Open AI chat"
+              >
+                <FiMessageCircle className="w-[18px] h-[18px]" />
+                <span>Ask AI</span>
+                {hasUnreadMessage && (
+                  <>
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-300" />
+                    </span>
+                    <span className="absolute inset-0 rounded-2xl animate-pulse-slow opacity-40 shadow-[0_0_20px_6px_rgba(59,130,246,0.5)]" />
+                  </>
+                )}
+              </motion.button>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
       <AnimatePresence>
         {isChatOpen && (
           <motion.div
-            className={`fixed z-50 bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-2xl flex flex-col ${
-              isFullscreen
-                ? "inset-2 sm:inset-4 md:inset-16"
-                : "bottom-16 right-4 w-[90vw] max-w-[360px] sm:w-96 md:w-[450px]"
-            }`}
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            className="fixed z-50 bottom-6 right-6 w-[90vw] max-w-[420px] flex flex-col rounded-2xl overflow-hidden bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/[0.08] shadow-2xl shadow-blue-500/10"
+            style={{ height: "min(600px, calc(100vh - 48px))", minHeight: "400px" }}
+            initial={{ scale: 0.85, opacity: 0, y: 30, transformOrigin: "bottom right" }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            style={{ boxShadow: "0 0 25px rgba(0, 0, 0, 0.2)" }}
+            exit={{ scale: 0.85, opacity: 0, y: 30 }}
+            transition={{ type: "spring", stiffness: 350, damping: 30 }}
           >
-            {/* Chat Header */}
-            <div className="p-3 sm:p-4 bg-blue-600 dark:bg-blue-700 text-white flex justify-between items-center">
-              <div className="flex items-center">
-                <FiTerminal className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                <span className="font-medium text-base sm:text-lg">Idrissa's Assistant</span>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-white/[0.05] border-b border-white/[0.08] shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
+                </span>
+                <span className="text-white font-semibold text-sm tracking-tight">Idrissa&apos;s AI</span>
               </div>
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <button
-                  onClick={decreaseFontSize}
-                  className="p-1 sm:p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  aria-label="Decrease text size"
-                  title="Decrease text size"
-                >
-                  <span className="text-xs font-bold">A-</span>
-                </button>
-                <button
-                  onClick={increaseFontSize}
-                  className="p-1 sm:p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  aria-label="Increase text size"
-                  title="Increase text size"
-                >
-                  <span className="text-xs font-bold">A+</span>
-                </button>
-                <button
-                  onClick={copyChat}
-                  className="p-1 sm:p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  aria-label="Copy chat"
-                  title="Copy chat history"
-                >
-                  {showCopied ? (
-                    <FiCheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                  ) : (
-                    <FiClipboard className="w-3 h-3 sm:w-4 sm:h-4" />
-                  )}
-                </button>
-                <button
-                  onClick={clearChat}
-                  className="p-1 sm:p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  aria-label="Clear chat"
-                  title="Clear chat history"
-                >
-                  <FiTrash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                </button>
-                <button
-                  onClick={toggleFullscreen}
-                  className="p-1 sm:p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                >
-                  {isFullscreen ? (
-                    <FiMinimize className="w-3 h-3 sm:w-4 sm:h-4" />
-                  ) : (
-                    <FiMaximize className="w-3 h-3 sm:w-4 sm:h-4" />
-                  )}
-                </button>
-                <button
-                  onClick={toggleChat}
-                  className="p-1 sm:p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  aria-label="Close chat"
-                  title="Close chat"
-                >
-                  <FiX className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
+              <div className="flex items-center gap-1">
+                <button onClick={handleMinimize} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors" aria-label="Minimize"><FiMinus className="w-4 h-4" /></button>
+                <button onClick={toggleChat} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.08] transition-colors" aria-label="Close"><FiX className="w-4 h-4" /></button>
               </div>
             </div>
 
-            {/* Messages Area */}
-            <div
-              className={`flex-1 p-3 sm:p-4 overflow-y-auto ${
-                isFullscreen ? "max-h-full" : "max-h-[400px] sm:max-h-[500px]"
-              } bg-gray-50 dark:bg-gray-800`}
-              ref={chatHistory}
-              style={{ scrollbarWidth: "thin", scrollbarColor: "#4B5563 transparent" }}
-            >
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`p-3 sm:p-4 rounded-lg mb-3 sm:mb-4 ${
-                    message.sender === "AI"
-                      ? "bg-blue-600 dark:bg-blue-700 text-white ml-0 mr-auto max-w-[85%]"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white ml-auto mr-0 max-w-[85%]"
-                  }`}
-                  style={{ boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)" }}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center text-xs sm:text-sm opacity-80">
-                      {message.sender === "AI" ? (
-                        <>
-                          <FiCode className="mr-1 w-3 h-3 sm:w-4 sm:h-4" /> Assistant
-                        </>
-                      ) : (
-                        <>
-                          <FiUser className="mr-1 w-3 h-3 sm:w-4 sm:h-4" /> You
-                        </>
-                      )}
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" ref={chatHistory} style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
+              {messages.map((message) => {
+                const displayText = message.text || message.fullText || "";
+                if (!displayText && !message.isStreaming) return null;
+                return (
+                  <div key={message.timestamp} className={`flex flex-col ${message.sender === "User" ? "items-end" : "items-start"}`}>
+                    <div className={`max-w-[85%] px-3.5 py-2.5 ${message.sender === "AI" ? "bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm text-gray-200" : "bg-blue-600/80 rounded-2xl rounded-tr-sm text-white"}`}>
+                      {renderMessageContent(message)}
                     </div>
-                    <div className="text-xs opacity-70">{formatTime(message.timestamp)}</div>
+                    <span className="text-[11px] text-gray-500 mt-1 px-1">{formatTime(message.timestamp)}</span>
                   </div>
-                  {renderMessageContent(message)}
-                </div>
-              ))}
+                );
+              })}
 
-              {isTyping && (
-                <div className="p-3 sm:p-4 rounded-lg mb-3 sm:mb-4 max-w-[85%] bg-blue-600 dark:bg-blue-700 text-white ml-0">
-                  <div className="flex items-center mb-2 text-xs sm:text-sm opacity-80">
-                    <FiCode className="mr-1 w-3 h-3 sm:w-4 sm:h-4" /> Assistant
-                  </div>
-                  <div className="flex space-x-2 p-2">
-                    <div
-                      className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white animate-bounce"
-                      style={{ animationDelay: "200ms" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-white animate-bounce"
-                      style={{ animationDelay: "400ms" }}
-                    ></div>
-                  </div>
+              {showSuggestions && (
+                <div className="grid grid-cols-2 gap-2 pt-2 pb-1">
+                  {suggestions.map((s, i) => (
+                    <button key={i} onClick={() => sendMessage(s)} className="text-xs text-left px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-gray-300 hover:bg-blue-500/20 hover:border-blue-500/30 hover:text-blue-200 transition-all duration-200 cursor-pointer">{s}</button>
+                  ))}
                 </div>
               )}
 
+              {isTyping && (
+                <div className="flex flex-col items-start">
+                  <div className="max-w-[85%] px-3.5 py-3 bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-tl-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="p-3 sm:p-4 border-t-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-end">
-              <textarea
-                ref={inputRef}
-                value={userMessage}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your message..."
-                rows={1}
-                className="flex-1 resize-none outline-none bg-transparent text-gray-900 dark:text-white py-1 px-1 mr-2 sm:mr-3 border-b border-gray-300 dark:border-gray-700 focus:border-blue-500 transition-colors"
-                style={{
-                  minHeight: "40px",
-                  fontSize: `${fontSize}px`,
-                }}
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!userMessage.trim() || isTyping}
-                className="p-2 sm:p-3 rounded-full bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors flex items-center justify-center disabled:opacity-50"
-                aria-label="Send message"
-              >
-                <FiSend className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+            {/* Input */}
+            <div className="shrink-0 px-3 py-3 border-t border-white/[0.08] bg-white/[0.02]">
+              <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-1.5">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer ${isListening ? "bg-red-500/80 text-white animate-pulse" : "bg-white/[0.06] text-gray-400 hover:text-blue-400 hover:bg-blue-500/20"}`}
+                  aria-label={isListening ? "Stop listening" : "Voice input"}
+                >
+                  {isListening ? <FiMicOff className="w-3.5 h-3.5" /> : <FiMic className="w-3.5 h-3.5" />}
+                </button>
+                <textarea
+                  ref={inputRef}
+                  value={userMessage}
+                  onChange={(e) => { setUserMessage(e.target.value); adjustTextareaHeight(e.target); }}
+                  onKeyDown={handleKeyDown}
+                  placeholder={isListening ? "Listening..." : "Ask me anything about Idrissa..."}
+                  rows={1}
+                  className="flex-1 resize-none bg-transparent text-gray-200 text-sm placeholder-gray-500 outline-none leading-relaxed py-1.5"
+                  style={{ minHeight: "32px", maxHeight: "120px" }}
+                />
+                <button
+                  onClick={() => sendMessage(userMessage)}
+                  disabled={!userMessage.trim() || isTyping}
+                  className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-30 disabled:hover:bg-blue-600 cursor-pointer"
+                  aria-label="Send message"
+                >
+                  <FiSend className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="flex items-center justify-between mt-1.5 px-1">
+                <button
+                  onClick={() => { setVoiceEnabled(v => !v); if (voiceEnabled) window.speechSynthesis?.cancel(); }}
+                  className={`flex items-center gap-1 text-[10px] cursor-pointer transition-colors ${voiceEnabled ? "text-blue-400" : "text-gray-600 hover:text-gray-400"}`}
+                >
+                  {voiceEnabled ? <FiVolume2 className="w-3 h-3" /> : <FiVolumeX className="w-3 h-3" />}
+                  {voiceEnabled ? "Voice on" : "Voice off"}
+                </button>
+                <span className="text-[10px] text-gray-600">Enter to send</span>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* CSS for scrollbars and animations */}
       <style jsx global>{`
-        .overflow-y-auto::-webkit-scrollbar {
-          width: 5px;
-        }
-        .overflow-y-auto::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .overflow-y-auto::-webkit-scrollbar-thumb {
-          background-color: rgba(107, 114, 128, 0.5);
-          border-radius: 20px;
-        }
-        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-          background-color: rgba(107, 114, 128, 0.7);
-        }
-        @keyframes blink {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0;
-          }
-        }
-        .animate-blink {
-          animation: blink 1s infinite;
-        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .animate-blink { animation: blink 0.8s steps(2, start) infinite; }
       `}</style>
-    </div>
+    </>
   );
 }

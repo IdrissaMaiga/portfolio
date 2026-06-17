@@ -3,655 +3,649 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { 
-  FiExternalLink, 
-  FiGithub, 
-  FiCode, 
-  FiLayers, 
-  FiServer, 
-  FiDatabase, 
-  FiLayout,
-  FiChevronLeft,
-  FiChevronRight,
-  FiShare2,
+import {
+  FiExternalLink,
+  FiGithub,
+  FiCode,
+  FiLayers,
+  FiServer,
   FiInfo,
-  FiBox
+  FiX,
+  FiChevronRight,
+  FiCheckCircle,
+  FiAlertTriangle,
 } from "react-icons/fi";
-import { 
-  SiReact,
-  SiNodedotjs,
-  SiMongodb,
-  SiFirebase,
-  SiExpress,
-  SiTypescript,
-  SiTailwindcss,
-  SiSpring,
-  SiMysql,
-  SiAmazon,
-  SiDocker
-} from "react-icons/si";// Project data with detailed information
-const projects = [
+import FloatingCodeBlock from "@/components/floating-code-block";
+import ArtBg from "@/components/art-bg";
+
+/* ------------------------------------------------------------------ */
+/*  Project data                                                       */
+/* ------------------------------------------------------------------ */
+
+interface Project {
+  id: string;
+  title: string;
+  shortDesc: string;
+  description: string;
+  techStack: string[];
+  features: string[];
+  challenges: string[];
+  image: string;
+  additionalImages: string[];
+  githubLink: string | null;
+  liveLink: string | null;
+}
+
+const projects: Project[] = [
   {
-    id: "indusac",
-    title: "INDUSAC Innovation Ecosystem Matchmaking Platform",
-    shortDesc: "Comprehensive B2B matchmaking platform connecting startups, investors, accelerators, and corporate partners across European innovation markets.",
-    description: `
-      INDUSAC is a sophisticated innovation ecosystem platform designed to facilitate connections between startups, investors, research institutions, and corporate partners. The platform uses intelligent matching algorithms to create meaningful partnerships that drive innovation and economic growth across European markets.
-      
-      This project was developed as part of my internship at 4D Consulting Kft., focusing on creating a scalable solution for the European innovation landscape. The platform handles complex matchmaking scenarios with intelligent algorithms that consider multiple parameters for optimal connections.
-    `,
-    image: "/logos/HorizonEurope Home.png",
-    additionalImages: ["/logos/HorizonEurope Login.png"],
-    imageAlt: "INDUSAC Innovation Platform",
+    id: "horizoneurope",
+    title: "HorizonEurope.io",
+    shortDesc:
+      "AI-powered EU funding guidance platform serving 5,000+ monthly users with real-time API responses under 2ms.",
+    description:
+      "Built during my role as Full Stack Engineer at EISMEA (European Innovation Council). The platform helps researchers find the right EU funding opportunities using AI-powered matching, smart context management, and automated document processing. Features high-speed scrapers for EU grant data extraction and an intelligent categorization engine processing 500+ funding opportunities.",
     techStack: [
-      { name: "Spring Boot", icon: <SiSpring /> },
-      { name: "PostgreSQL", icon: <SiMysql /> },
-      { name: "React.js", icon: <SiReact /> },
-      { name: "TypeScript", icon: <SiTypescript /> },
-      { name: "AWS", icon: <SiAmazon /> },
-      { name: "Docker", icon: <SiDocker /> }
+      "Spring Boot",
+      "React.js",
+      "TypeScript",
+      "PostgreSQL",
+      "AWS",
+      "Docker",
     ],
     features: [
-      "Intelligent matchmaking algorithm considering 20+ parameters",
-      "Real-time messaging system using WebSockets",
-      "Advanced filtering and search capabilities",
-      "Admin dashboard with analytics and metrics",
-      "RESTful API for third-party integrations",
-      "Stripe payment processing for premium features"
+      "Smart context management engine for intelligent interactions",
+      "NLP-based categorization of 500+ funding opportunities",
+      "High-speed scraper bypassing captchas for EU grant data",
+      "Real-time API responses under 2ms",
+      "Document processing for EU funding calls",
+      "Serving 5,000+ monthly users",
     ],
     challenges: [
-      "Developing sophisticated matching algorithms",
-      "Handling large datasets with 10,000+ user profiles",
-      "Ensuring real-time performance with sub-200ms response times",
-      "Implementing secure third-party integrations"
+      "Processing large EU datasets efficiently",
+      "Building captcha-bypassing scrapers",
+      "Achieving sub-2ms API response times",
+      "Handling complex multi-language funding documents",
     ],
-    solution: `
-      I implemented a multi-factor matching algorithm that analyzes industry verticals, funding stages, and strategic objectives. The backend uses Spring Boot with PostgreSQL for robust data management, while Redis provides caching for optimal performance.
-      
-      The frontend leverages React.js with TypeScript for type safety and better developer experience. WebSocket integration enables real-time communication between matched parties, creating an interactive platform for innovation collaboration.
-    `,
-    githubLink: "#",
-    liveLink: "#"
+    image: "/logos/HorizonEurope Home.png",
+    additionalImages: ["/logos/HorizonEurope Login.png"],
+    githubLink: null,
+    liveLink: "https://horizoneurope.io",
+  },
+  {
+    id: "neptun-api",
+    title: "Neptun API",
+    shortDesc:
+      "The most complete Python wrapper for Hungary's Neptun university system — 1,100+ endpoints reverse-engineered across 75+ controllers.",
+    description:
+      "A comprehensive Python library that reverse-engineers the Angular web client of Hungary's Neptun university management system. Covers 25+ functional areas including messaging (18+ methods), calendar (29), courses (60+), exams (30+), grades (21), financials (50+), and more. Features automated JWT authentication with transparent token refresh, Playwright-based survey automation, and MCP server support for AI assistant integration.",
+    techStack: ["Python", "Playwright", "MCP Protocol"],
+    features: [
+      "1,100+ API endpoints across 75+ controllers",
+      "Automated JWT authentication with token refresh",
+      "MCP server for Claude Desktop and Cursor integration",
+      "Playwright-based automated survey filling",
+      "Support for multiple Hungarian universities (Obuda, BME, ELTE)",
+      "Modular pip installation with optional extras",
+    ],
+    challenges: [
+      "Reverse-engineering undocumented Angular API calls",
+      "Handling complex JWT authentication flows",
+      "Supporting multiple university instances",
+      "Building reliable browser automation",
+    ],
+    image: "/logos/skills.png",
+    additionalImages: [],
+    githubLink: "https://github.com/IdrissaMaiga/neptun-api",
+    liveLink: null,
   },
   {
     id: "gmail-ai",
-    title: "Gmail AI Assistance - Intelligent Email Management",
-    shortDesc: "AI-powered Gmail management system automating email categorization, priority detection, and response generation.",
-    description: `
-      Gmail AI Assistance is an intelligent email management platform that leverages advanced AI models to streamline email workflows. The system automatically categorizes emails, detects priorities, and generates personalized responses using cutting-edge language models.
-      
-      This project demonstrates the practical application of AI in productivity tools, combining Google OAuth integration with multiple AI services to create a comprehensive email management solution.
-    `,
-    image: "/logos/gmail.png",
-    additionalImages: [],
-    imageAlt: "Gmail AI Assistance",
+    title: "Gmail AI Assistant",
+    shortDesc:
+      "AI-powered Gmail automation using dual LLMs for smart email categorization, priority detection, and response generation.",
+    description:
+      "An intelligent email management platform that leverages DeepSeek R1 and Mistral AI to automate Gmail workflows. Features secure Google OAuth 2.0 integration, AI-powered email categorization and prioritization, smart response generation, and batch processing for 1,000+ emails.",
     techStack: [
-      { name: "Next.js", icon: <SiReact /> },
-      { name: "TypeScript", icon: <SiTypescript /> },
-      { name: "Google OAuth", icon: <SiFirebase /> },
-      { name: "DeepSeek R1", icon: <FiBox /> },
-      { name: "Mistral AI", icon: <FiBox /> },
-      { name: "Tailwind CSS", icon: <SiTailwindcss /> }
+      "Next.js",
+      "TypeScript",
+      "Google OAuth",
+      "DeepSeek R1",
+      "Mistral AI",
+      "Tailwind CSS",
     ],
     features: [
       "Secure Google OAuth 2.0 authentication",
+      "Dual LLM support (DeepSeek R1 + Mistral AI)",
       "AI-powered email categorization and prioritization",
-      "Smart response generation with multiple AI models",
-      "Batch processing handling 1,000+ emails",
-      "Intelligent rate limiting and API optimization",
-      "Comprehensive analytics dashboard"
+      "Smart response generation",
+      "Batch processing for 1,000+ emails",
+      "Dark mode UI with Radix components",
     ],
     challenges: [
       "Integrating multiple AI services efficiently",
       "Managing API rate limits and costs",
-      "Ensuring data privacy and security",
-      "Processing large volumes of emails"
+      "Ensuring data privacy with OAuth",
+      "Processing large email volumes",
     ],
-    solution: `
-      I implemented a hybrid AI approach combining DeepSeek R1 and Mistral AI for optimal performance. The system uses intelligent caching and batch processing to handle large email volumes while staying within API limits.
-      
-      Secure OAuth integration ensures user data privacy, while the responsive UI built with Next.js and Tailwind CSS provides an intuitive experience for managing complex email workflows.
-    `,
-    githubLink: "#",
-    liveLink: "#"
+    image: "/logos/gmail.png",
+    additionalImages: [],
+    githubLink: "https://github.com/IdrissaMaiga/gmail-ai-agent",
+    liveLink: null,
   },
   {
-    id: "signalapp",
-    title: "SignalApp - Trading Signals Platform",
-    shortDesc: "Real-time trading signals platform providing market insights and secure authentication for traders.",
-    description: `
-      SignalApp is a trading signals platform that delivers real-time market insights to traders across various financial instruments. The application combines powerful technical analysis with robust security features to provide a reliable trading companion.
-      
-      This project was born from my interest in financial markets and the need for a reliable signals platform that traders could trust. The main goal was to create an application that delivered accurate signals while maintaining a clean, intuitive interface.
-    `,
-    image: "/logos/signal.png",
-    additionalImages: [],
-    imageAlt: "SignalApp Trading Platform",
-    techStack: [
-      { name: "React Native", icon: <SiReact /> },
-      { name: "Firebase", icon: <SiFirebase /> },
-      { name: "TypeScript", icon: <SiTypescript /> },
-      { name: "Real-time Database", icon: <FiDatabase /> },
-      { name: "OAuth", icon: <FiServer /> },
-      { name: "TailwindCSS", icon: <SiTailwindcss /> }
-    ],
+    id: "trading-bot",
+    title: "Trading Bot",
+    shortDesc:
+      "Automated BUY-only grid trading bot for XAUUSD on MetaTrader 5 with real-time dashboard and tick-based backtester.",
+    description:
+      "A sophisticated grid-trading strategy bot for gold (XAUUSD) on MetaTrader 5. Uses pure grid mechanics — no indicators, no prediction. Features automatic pause/resume after stop-loss events, a real-time web dashboard for monitoring, a tick-based backtester using real MT5 data, and a comprehensive test suite with 32 passing tests.",
+    techStack: ["Python", "MetaTrader 5", "WebSockets", "HTML/CSS"],
     features: [
-      "Real-time market signals and alerts with configurable notifications",
-      "Technical analysis indicators with visual representations",
-      "User customizable watchlists and alert conditions",
-      "Push notifications for critical signals and price targets",
-      "Historical performance tracking and analysis",
-      "Multi-source data verification for signal accuracy"
+      "Pure grid mechanics trading strategy",
+      "Real-time web dashboard on localhost:8765",
+      "Tick-based backtester with real MT5 data",
+      "32 passing automated tests",
+      "Automatic pause/resume after stop-loss",
+      "CLI configuration and demo mode",
     ],
     challenges: [
-      "Ensuring signal delivery with minimal latency",
-      "Managing real-time data synchronization across devices",
-      "Implementing accurate technical analysis indicators",
-      "Balancing information density with UI clarity"
+      "Implementing reliable grid trading logic",
+      "Real-time market data processing",
+      "Building accurate backtesting system",
+      "Risk management with shared stop-loss",
     ],
-    solution: `
-      I implemented a WebSocket-based communication system to ensure real-time signal delivery with minimal latency. The signal generation engine uses a multi-factor verification approach, combining various indicators to filter out false signals.
-      
-      For the UI, I adopted a card-based design with collapsible sections, allowing users to focus on their preferred markets while maintaining access to comprehensive data. Firebase was utilized for authentication and real-time data synchronization, ensuring a consistent experience across devices.
-    `,
-    githubLink: "https://github.com/IdrissaMaiga/SignalApp",
-    liveLink: "#"
+    image: "/logos/skills.png",
+    additionalImages: [],
+    githubLink: "https://github.com/IdrissaMaiga/trading-bot",
+    liveLink: null,
   },
   {
     id: "filmu",
-    title: "Filmu - Video-on-Demand Streaming Platform",
-    shortDesc: "A comprehensive VOD platform with 10,000+ video library serving 500+ concurrent users with 99.8% uptime.",
-    description: `
-      Filmu is a comprehensive VOD streaming platform designed to provide users with a Netflix-like experience. The application offers personalized content recommendations based on user viewing history and preferences, along with robust user authentication and profile management.
-      
-      This project was developed to combine my passion for video streaming solutions with modern mobile development technologies. It presented several technical challenges, particularly in implementing adaptive video streaming with efficient caching mechanisms.
-    `,
-    image: "/logos/Filmu.png",
-    additionalImages: [],
-    imageAlt: "Filmu VOD Platform",
+    title: "Filmu",
+    shortDesc:
+      "Full-stack VOD streaming platform with HLS video, live TV channels, subscription management, and admin dashboard.",
+    description:
+      "A comprehensive Netflix-like streaming platform built with the MERN stack. Users can browse movies and TV series, watch live channels via HLS streaming, manage subscriptions, and track watch history. Includes an admin dashboard for user and financial management, a referral program, and M3U playlist processing.",
     techStack: [
-      { name: "React Native", icon: <SiReact /> },
-      { name: "Node.js", icon: <SiNodedotjs /> },
-      { name: "Express.js", icon: <SiExpress /> },
-      { name: "MongoDB", icon: <SiMongodb /> },
-      { name: "AWS S3", icon: <SiAmazon /> },
-      { name: "Redis", icon: <SiMongodb /> }
+      "React",
+      "Node.js",
+      "Express",
+      "MongoDB",
+      "Prisma",
+      "HLS.js",
     ],
     features: [
-      "Personalized content recommendations using collaborative filtering, increasing user engagement by 45%",
-      "Secure JWT authentication with role-based access control (RBAC) for users, creators, and administrators",
-      "Adaptive video streaming with HLS/DASH and CDN integration",
-      "CMS enabling creators to upload, edit, and monetize content with analytics dashboard",
-      "Stripe integration for subscription management, pay-per-view transactions, and creator payouts",
-      "Offline viewing capability with encrypted local storage for premium users",
-      "Cross-platform mobile app (iOS/Android) with 95% code reusability"
+      "HLS adaptive video streaming (ArtPlayer, Video.js, HLS.js)",
+      "Live TV channels with country-based filtering",
+      "JWT authentication with role-based access",
+      "Subscription system with payment tracking",
+      "Admin dashboard with analytics",
+      "React Native mobile app (companion repo)",
     ],
     challenges: [
-      "Implementing efficient video streaming with minimal buffering",
-      "Designing a recommendation engine that provides relevant content",
-      "Ensuring user data security and privacy compliance",
-      "Optimizing app performance for older mobile devices"
+      "Implementing efficient HLS streaming",
+      "Building recommendation engine",
+      "Cross-platform mobile + web support",
+      "Subscription and payment management",
     ],
-    solution: `
-      I developed a custom recommendation algorithm that analyzes viewing patterns and content metadata. For video streaming, I implemented a chunked delivery system with adaptive bitrate selection based on network conditions.
-      
-      User authentication was handled using JWT tokens with refresh token rotation, ensuring both security and a seamless user experience. The mobile app was extensively optimized to minimize resource usage while maintaining a smooth UI experience.
-    `,
-    githubLink: "https://github.com/IdrissaMaiga/Android-Filmu-ReactNative-MongoDb",
-    liveLink: "#"
+    image: "/logos/Filmu.png",
+    additionalImages: [],
+    githubLink: "https://github.com/IdrissaMaiga/filmu-server",
+    liveLink: null,
+  },
+  {
+    id: "signalapp",
+    title: "SignalApp",
+    shortDesc:
+      "Real-time forex and binary trading signals mobile app with Firebase, role-based access, and push notifications.",
+    description:
+      "A mobile trading signals platform delivering real-time market insights via Firebase Realtime Database. Features Google Sign-In authentication, admin/sender signal management panel, role-based access control, and a responsive UI with haptic feedback. Built with React Native and Expo 52.",
+    techStack: [
+      "React Native",
+      "Expo 52",
+      "TypeScript",
+      "Firebase",
+      "Google Sign-In",
+    ],
+    features: [
+      "Real-time signal delivery via Firebase",
+      "Google Sign-In authentication",
+      "Admin/sender signal management panel",
+      "Role-based access control",
+      "Push notifications for critical signals",
+      "Cross-device responsive UI with haptic feedback",
+    ],
+    challenges: [
+      "Ensuring minimal latency signal delivery",
+      "Real-time data sync across devices",
+      "Implementing reliable push notifications",
+      "Balancing information density with UI clarity",
+    ],
+    image: "/logos/signal.png",
+    additionalImages: [],
+    githubLink: "https://github.com/IdrissaMaiga/signal-app",
+    liveLink: null,
   },
 ];
 
-// Project section tabs
-const tabs = [
-  { id: "overview", label: "Overview", icon: <FiInfo /> },
-  { id: "features", label: "Features", icon: <FiLayers /> },
-  { id: "challenges", label: "Challenges & Solutions", icon: <FiServer /> },
-  { id: "tech", label: "Tech Stack", icon: <FiCode /> },
+/* ------------------------------------------------------------------ */
+/*  Tab definitions                                                    */
+/* ------------------------------------------------------------------ */
+
+const detailTabs = [
+  { id: "overview", label: "Overview", icon: <FiInfo className="w-4 h-4" /> },
+  {
+    id: "features",
+    label: "Features",
+    icon: <FiLayers className="w-4 h-4" />,
+  },
+  {
+    id: "challenges",
+    label: "Challenges & Solutions",
+    icon: <FiAlertTriangle className="w-4 h-4" />,
+  },
+  {
+    id: "tech",
+    label: "Tech Stack",
+    icon: <FiCode className="w-4 h-4" />,
+  },
 ];
 
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+
 export default function DetailedProjectsSection() {
-  const [activeProject, setActiveProject] = useState(projects[0].id);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const projectSectionRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  const getActiveProject = useCallback(() => {
-    return projects.find(project => project.id === activeProject) || projects[0];
-  }, [activeProject]); // Removed projects from dependency array
-
-  // Image carousel controls
-  const nextImage = useCallback(() => {
-    const project = getActiveProject();
-    const totalImages = project.additionalImages.length + 1; // +1 for main image
-    setCurrentImageIndex((prev) => (prev + 1) % totalImages);
-  }, [getActiveProject]);
-
-  const prevImage = useCallback(() => {
-    const project = getActiveProject();
-    const totalImages = project.additionalImages.length + 1;
-    setCurrentImageIndex((prev) => (prev - 1 + totalImages) % totalImages);
-  }, [getActiveProject]);
-
-  // Handle touch events for swipe
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const touchEnd = e.changedTouches[0].clientX;
-    const diff = touchStart - touchEnd;
-    
-    // If the swipe is significant enough, change image
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        nextImage();
-      } else {
-        prevImage();
-      }
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (selectedProject) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
-  };
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedProject]);
 
-  // Reset state when project changes
-  useEffect(() => {
-    setCurrentImageIndex(0);
+  const openProject = useCallback((project: Project) => {
     setActiveTab("overview");
-    setIsExpanded(false);
-  }, [activeProject]);
+    setSelectedProject(project);
+  }, []);
 
-  // Handle keyboard navigation
+  const closeProject = useCallback(() => {
+    setSelectedProject(null);
+  }, []);
+
+  // Listen for open-project events from the AI assistant
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        prevImage();
-      } else if (e.key === "ArrowRight") {
-        nextImage();
+    const handler = (e: CustomEvent) => {
+      const { projectId } = e.detail;
+      const project = projects.find(p => p.id === projectId);
+      if (project) {
+        openProject(project);
       }
     };
+    window.addEventListener('open-project', handler as EventListener);
+    return () => window.removeEventListener('open-project', handler as EventListener);
+  }, [openProject]);
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [nextImage, prevImage]);
-
-  // Get current image source
-  const getCurrentImageSrc = () => {
-    const project = getActiveProject();
-    if (currentImageIndex === 0) {
-      return project.image;
-    } else {
-      return project.additionalImages[currentImageIndex - 1];
-    }
-  };
+  // Close on escape
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeProject();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [closeProject]);
 
   return (
-    <section 
-      id="projects" 
-      ref={projectSectionRef}
-      className="py-20 relative overflow-hidden"
+    <section
+      id="projects"
+      className="py-16 sm:py-24 lg:py-32 relative bg-[#050a16] overflow-x-hidden"
     >
-      {/* Decorative elements */}
-      <div className="blur-circle blur-primary w-96 h-96 -left-48 top-1/3 opacity-30"></div>
-      <div className="blur-circle blur-accent w-96 h-96 -right-48 bottom-1/4 opacity-30"></div>
-      
-      <div className="container mx-auto px-4 md:px-6">
+      <ArtBg variant="projects" />
+
+      {/* ---- Floating code block ---- */}
+      <FloatingCodeBlock
+        code={`@GetMapping("/api/projects")\npublic List<Project> getAll() {\n    return projectService\n        .findAll()\n        .stream()\n        .filter(Project::isPublic)\n        .toList();\n}`}
+        language="java"
+        position="right"
+        className="top-48"
+      />
+
+      {/* Subtle grid pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.015] pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* ---- Section header ---- */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="mb-16 text-center"
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true, margin: "-80px" }}
+          className="mb-12 sm:mb-16 text-center"
         >
-          <span className="px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-medium">
+          <motion.span
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="inline-block px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-blue-400 text-sm font-medium mb-6"
+          >
             Portfolio
-          </span>
-          <h2 className="text-3xl md:text-4xl font-bold mt-4 mb-6">
-            Featured Projects
+          </motion.span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+            Featured{" "}
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-500 bg-clip-text text-transparent">
+              Projects
+            </span>
           </h2>
-          <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400">
-            A selection of my most significant work that showcases my skills and expertise
+          <p className="max-w-2xl mx-auto text-gray-400 text-base sm:text-lg leading-relaxed">
+            A selection of my most significant work showcasing full-stack
+            development, AI integration, and system design
           </p>
         </motion.div>
 
-        {/* Project Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {/* ---- Project grid (6 cards) ---- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 project-grid" style={{ perspective: "1200px" }}>
           {projects.map((project, index) => (
+            <div key={project.id} className="project-card-wrapper">
             <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true, margin: "-100px" }}
-              onClick={() => setActiveProject(project.id)}
-              className={`card overflow-hidden cursor-pointer transition-all duration-300 ${
-                activeProject === project.id 
-                  ? "ring-2 ring-blue-500 dark:ring-blue-400 shadow-lg" 
-                  : "hover:shadow-md"
-              }`}
+              initial={{ opacity: 0, z: -100, rotateY: index % 2 === 0 ? -10 : 10 }}
+              whileInView={{ opacity: 1, z: 0, rotateY: 0 }}
+              transition={{ duration: 0.7, delay: index * 0.1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              style={{ transformStyle: "preserve-3d" }}
+              onClick={() => openProject(project)}
+              className="group cursor-pointer bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl overflow-hidden transition-all duration-300 hover:border-white/[0.15] hover:shadow-[0_0_30px_rgba(59,130,246,0.08)]"
             >
-              <div className="relative h-48 overflow-hidden">
+              {/* Card image */}
+              <div className="relative h-48 overflow-hidden bg-[#0a0f1e]">
                 <Image
                   src={project.image}
-                  alt={project.imageAlt}
+                  alt={project.title}
                   fill
-                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105 opacity-80 group-hover:opacity-100"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-lg font-bold text-white">{project.title.split(' - ')[0]}</h3>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/40 to-transparent" />
+                {/* Hover glow overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-transparent to-purple-500/0 group-hover:from-blue-500/[0.05] group-hover:to-purple-500/[0.05] transition-all duration-500" />
               </div>
-              <div className="p-4">
-                <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-4">
+
+              {/* Card body */}
+              <div className="p-5">
+                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors duration-300">
+                  {project.title}
+                </h3>
+                <p className="text-gray-400 text-sm leading-relaxed line-clamp-2 mb-4">
                   {project.shortDesc}
                 </p>
-                <div className="flex flex-wrap gap-2">
+
+                {/* Tech stack badges */}
+                <div className="flex flex-wrap gap-2 mb-4">
                   {project.techStack.slice(0, 3).map((tech) => (
-                    <span 
-                      key={tech.name} 
-                      className="inline-flex items-center text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-gray-700 dark:text-gray-300"
+                    <span
+                      key={tech}
+                      className="text-xs px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-gray-300"
                     >
-                      <span className="mr-1 text-blue-500 dark:text-blue-400">{tech.icon}</span>
-                      {tech.name}
+                      {tech}
                     </span>
                   ))}
                   {project.techStack.length > 3 && (
-                    <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-gray-700 dark:text-gray-300">
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-gray-500">
                       +{project.techStack.length - 3}
                     </span>
                   )}
                 </div>
+
+                {/* Links row */}
+                <div className="flex items-center gap-3">
+                  {project.githubLink && (
+                    <a
+                      href={project.githubLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-400 transition-colors"
+                    >
+                      <FiGithub className="w-3.5 h-3.5" />
+                      GitHub
+                    </a>
+                  )}
+                  {project.liveLink && (
+                    <a
+                      href={project.liveLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-cyan-400 transition-colors"
+                    >
+                      <FiExternalLink className="w-3.5 h-3.5" />
+                      Live Demo
+                    </a>
+                  )}
+                  <span className="ml-auto inline-flex items-center gap-1 text-xs text-gray-500 group-hover:text-blue-400 transition-colors">
+                    View details
+                    <FiChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
               </div>
             </motion.div>
+            </div>
           ))}
         </div>
+      </div>
 
-        {/* Active Project Details */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="card p-0 overflow-hidden"
-          key={activeProject} // Re-render when project changes
-        >
-          {/* Project Images Carousel */}
-          <div 
-            ref={carouselRef}
-            className="relative h-64 md:h-96 bg-gray-800 overflow-hidden"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
+      {/* ================================================================ */}
+      {/*  DETAIL MODAL                                                     */}
+      {/* ================================================================ */}
+      <AnimatePresence>
+        {selectedProject && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-8 pb-4 sm:pb-8 px-3 sm:px-4 overflow-y-auto"
+            onClick={closeProject}
           >
-            {/* Main image */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentImageIndex}
-                initial={{ opacity: 0, x: 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0"
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
+
+            {/* Modal panel */}
+            <motion.div
+              ref={modalRef}
+              initial={{ opacity: 0, y: 40, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.97 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-2xl lg:max-w-3xl bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl shadow-blue-900/10 z-10 my-auto"
+            >
+              {/* Close button */}
+              <button
+                onClick={closeProject}
+                className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all"
+                aria-label="Close"
               >
+                <FiX className="w-5 h-5" />
+              </button>
+
+              {/* Hero image */}
+              <div className="relative h-56 sm:h-72 bg-[#070c18] overflow-hidden">
                 <Image
-                  src={getCurrentImageSrc()}
-                  alt={getActiveProject().imageAlt}
+                  src={selectedProject.image}
+                  alt={selectedProject.title}
                   fill
-                  className="object-cover"
+                  className="object-cover opacity-80"
                 />
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Navigation arrows */}
-            <button
-              onClick={(e) => { e.stopPropagation(); prevImage(); }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors z-10"
-              aria-label="Previous image"
-            >
-              <FiChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); nextImage(); }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors z-10"
-              aria-label="Next image"
-            >
-              <FiChevronRight className="w-5 h-5" />
-            </button>
-
-            {/* Image indicators */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {[getActiveProject().image, ...getActiveProject().additionalImages].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentImageIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    currentImageIndex === i 
-                      ? "bg-white w-4" 
-                      : "bg-white/50 hover:bg-white/80"
-                  }`}
-                  aria-label={`Go to image ${i + 1}`}
-                />
-              ))}
-            </div>
-
-            {/* Project title overlay */}
-            <div className="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-              <h3 className="text-2xl font-bold text-white">{getActiveProject().title}</h3>
-              <div className="flex mt-2 space-x-4">
-                {getActiveProject().githubLink && (
-                  <a 
-                    href={getActiveProject().githubLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-white/90 hover:text-white transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <FiGithub className="mr-2" /> GitHub
-                  </a>
-                )}
-                {getActiveProject().liveLink && (
-                  <a 
-                    href={getActiveProject().liveLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-white/90 hover:text-white transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <FiExternalLink className="mr-2" /> Live Demo
-                  </a>
-                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1e] via-[#0a0f1e]/50 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                    {selectedProject.title}
+                  </h3>
+                  <p className="text-gray-300 text-sm sm:text-base leading-relaxed max-w-xl">
+                    {selectedProject.shortDesc}
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Project content tabs */}
-          <div className="border-b border-gray-200 dark:border-gray-800">
-            <div className="flex overflow-x-auto scrollbar-hide">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center whitespace-nowrap py-4 px-6 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? "border-b-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400"
-                      : "text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                  }`}
-                >
-                  <span className="mr-2">{tab.icon}</span>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tab content */}
-          <div className="p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                {activeTab === "overview" && (
-                  <div className="prose prose-lg dark:prose-invert max-w-none">
-                    <div className={`relative ${isExpanded ? "" : "max-h-32 overflow-hidden"}`}>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                        {getActiveProject().description}
-                      </p>
-                      {!isExpanded && (
-                        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white dark:from-gray-900 to-transparent"></div>
-                      )}
-                    </div>
-                    <button 
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      className="mt-2 text-blue-600 dark:text-blue-400 font-medium text-sm flex items-center"
+              {/* Tabs */}
+              <div className="border-b border-white/[0.06] bg-white/[0.02]">
+                <div className="flex overflow-x-auto scrollbar-hide">
+                  {detailTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-2 whitespace-nowrap py-3.5 px-5 text-sm font-medium transition-all border-b-2 ${
+                        activeTab === tab.id
+                          ? "border-blue-400 text-blue-400"
+                          : "border-transparent text-gray-500 hover:text-gray-300"
+                      }`}
                     >
-                      {isExpanded ? "Show less" : "Read more"}
-                      <FiChevronRight className={`ml-1 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                      {tab.icon}
+                      {tab.label}
                     </button>
-                  </div>
-                )}
+                  ))}
+                </div>
+              </div>
 
-                {activeTab === "features" && (
-                  <div>
-                    <h4 className="text-xl font-semibold mb-4 flex items-center">
-                      <FiLayers className="mr-2 text-blue-600 dark:text-blue-400" /> Key Features
-                    </h4>
-                    <ul className="space-y-3">
-                      {getActiveProject().features.map((feature, index) => (
-                        <motion.li 
-                          key={index}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                          className="flex items-start"
-                        >
-                          <span className="text-green-500 dark:text-green-400 mr-2 mt-1">•</span>
-                          <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+              {/* Tab content */}
+              <div className="p-6 sm:p-8 min-h-[260px]">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {/* -- Overview -- */}
+                    {activeTab === "overview" && (
+                      <div>
+                        <p className="text-gray-300 leading-relaxed text-[15px]">
+                          {selectedProject.description}
+                        </p>
+                      </div>
+                    )}
 
-                {activeTab === "challenges" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-xl font-semibold mb-4 flex items-center">
-                        <FiServer className="mr-2 text-blue-600 dark:text-blue-400" /> Challenges
-                      </h4>
+                    {/* -- Features -- */}
+                    {activeTab === "features" && (
                       <ul className="space-y-3">
-                        {getActiveProject().challenges.map((challenge, index) => (
-                          <motion.li 
-                            key={index}
-                            initial={{ opacity: 0, x: -10 }}
+                        {selectedProject.features.map((feature, i) => (
+                          <motion.li
+                            key={i}
+                            initial={{ opacity: 0, x: -12 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3, delay: index * 0.1 }}
-                            className="flex items-start"
+                            transition={{
+                              duration: 0.3,
+                              delay: i * 0.06,
+                            }}
+                            className="flex items-start gap-3"
                           >
-                            <span className="text-amber-500 dark:text-amber-400 mr-2 mt-1">•</span>
-                            <span className="text-gray-700 dark:text-gray-300">{challenge}</span>
+                            <FiCheckCircle className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                            <span className="text-gray-300 text-[15px]">
+                              {feature}
+                            </span>
                           </motion.li>
                         ))}
                       </ul>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-xl font-semibold mb-4 flex items-center">
-                        <FiLayout className="mr-2 text-blue-600 dark:text-blue-400" /> Solution
-                      </h4>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                        {getActiveProject().solution}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                    )}
 
-                {activeTab === "tech" && (
-                  <div>
-                    <h4 className="text-xl font-semibold mb-6 flex items-center">
-                      <FiCode className="mr-2 text-blue-600 dark:text-blue-400" /> Technology Stack
-                    </h4>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {getActiveProject().techStack.map((tech, index) => (
-                        <motion.div
-                          key={tech.name}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                          className="flex flex-col items-center p-4 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                        >
-                          <div className="text-3xl text-blue-600 dark:text-blue-400 mb-2">
-                            {tech.icon}
-                          </div>
-                          <span className="text-gray-700 dark:text-gray-300 text-sm text-center">
-                            {tech.name}
-                          </span>
-                        </motion.div>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-8">
-                      <h5 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">Technology Breakdown</h5>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm">
-                        This project leverages a {getActiveProject().techStack.some(t => t.name.includes("React")) ? "React-based" : "custom"} frontend
-                        with a {getActiveProject().techStack.some(t => t.name.includes("Node")) ? "Node.js" : "custom"} backend.
-                        Data is stored in {getActiveProject().techStack.some(t => t.name.includes("MongoDB")) ? "MongoDB" : getActiveProject().techStack.some(t => t.name.includes("Firebase")) ? "Firebase" : "a database"}.
-                        The architecture follows modern best practices for scalability and maintainability.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
+                    {/* -- Challenges -- */}
+                    {activeTab === "challenges" && (
+                      <ul className="space-y-3">
+                        {selectedProject.challenges.map((challenge, i) => (
+                          <motion.li
+                            key={i}
+                            initial={{ opacity: 0, x: -12 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{
+                              duration: 0.3,
+                              delay: i * 0.06,
+                            }}
+                            className="flex items-start gap-3"
+                          >
+                            <FiAlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                            <span className="text-gray-300 text-[15px]">
+                              {challenge}
+                            </span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    )}
 
-          {/* Footer with additional links */}
-          <div className="p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex flex-wrap justify-between items-center gap-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600 dark:text-gray-400 text-sm">Share:</span>
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href + "#" + getActiveProject().id);
-                  alert("Link copied to clipboard!");
-                }}
-                className="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                aria-label="Copy link"
-              >
-                <FiShare2 className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <div className="flex space-x-4">
-              {getActiveProject().githubLink && (
-                <a 
-                  href={getActiveProject().githubLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="btn btn-outline text-sm py-2 px-4"
-                >
-                  <FiGithub className="mr-2" /> View Code
-                </a>
+                    {/* -- Tech Stack -- */}
+                    {activeTab === "tech" && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {selectedProject.techStack.map((tech, i) => (
+                          <motion.div
+                            key={tech}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{
+                              duration: 0.3,
+                              delay: i * 0.06,
+                            }}
+                            className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-blue-500/20 hover:bg-blue-500/[0.04] transition-all duration-300"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                              <FiServer className="w-4 h-4 text-blue-400" />
+                            </div>
+                            <span className="text-gray-300 text-sm font-medium">
+                              {tech}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Footer with links */}
+              {(selectedProject.githubLink || selectedProject.liveLink) && (
+                <div className="px-6 sm:px-8 pb-6 sm:pb-8 flex flex-wrap gap-3">
+                  {selectedProject.githubLink && (
+                    <a
+                      href={selectedProject.githubLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.1] text-gray-300 text-sm font-medium hover:border-white/20 hover:bg-white/[0.08] hover:text-white transition-all duration-300"
+                    >
+                      <FiGithub className="w-4 h-4" />
+                      View on GitHub
+                    </a>
+                  )}
+                  {selectedProject.liveLink && (
+                    <a
+                      href={selectedProject.liveLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-400/20 text-blue-300 text-sm font-medium hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/30 hover:text-blue-200 transition-all duration-300"
+                    >
+                      <FiExternalLink className="w-4 h-4" />
+                      Live Demo
+                    </a>
+                  )}
+                </div>
               )}
-              {getActiveProject().liveLink && (
-                <a 
-                  href={getActiveProject().liveLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="btn btn-primary text-sm py-2 px-4"
-                >
-                  <FiExternalLink className="mr-2" /> Live Demo
-                </a>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -1,43 +1,54 @@
 "use client";
 
-import AboutSection from "@/components/about-section";
-import ProjectsSection from "@/components/projects-section";
-import SkillsSection from "@/components/skills-section";
-import ContactSection from "@/components/contact-section";
-import Footer from "@/components/footer";
-import ChatButton from "@/components/chat-button";
-import MatrixBackground from "@/components/matrix-background";
-import Navbar from "@/components/navbar-section";
+import ScrollOrchestrator from "@/components/scroll-orchestrator";
 import HeroSection from "@/components/hero-section";
+import StorySection from "@/components/story-section";
+import ProjectsSection from "@/components/projects-section";
+import SkillsBentoSection from "@/components/skills/skills-bento-section";
+import InsightsSection from "@/components/insights-section";
+import ConnectSection from "@/components/connect-section";
+import SectionTransition from "@/components/section-transition";
+import RoomFrame from "@/components/room-frame";
 
 export default function Home() {
   return (
-    <main className="min-h-screen relative overflow-x-hidden">
-      {/* Programming-themed matrix background */}
-      <MatrixBackground
-        opacity={0.1}
-        lightModeOpacity={0.08}
-        darkModeOpacity={0.15}
-        speed={0.8} // Slightly slower speed for mobile
-      />
+    <ScrollOrchestrator>
+      <main className="min-h-screen relative overflow-x-hidden bg-[#020510]">
 
-      {/* Navbar */}
-      <Navbar />
+        <RoomFrame accent="blue">
+          <HeroSection />
+        </RoomFrame>
 
-      {/* Main Sections with responsive container */}
-    
-        <HeroSection />
-        <AboutSection />
-        <ProjectsSection />
-        <SkillsSection />
-        <ContactSection />
-     
+        <SectionTransition variant="double-door" />
 
-      {/* Footer */}
-      <Footer />
+        <RoomFrame accent="indigo">
+          <StorySection />
+        </RoomFrame>
 
-      {/* Interactive Chat Button */}
-      <ChatButton />
-    </main>
+        <SectionTransition variant="single-door" />
+
+        <RoomFrame accent="purple">
+          <ProjectsSection />
+        </RoomFrame>
+
+        <SectionTransition variant="double-door" />
+
+        <RoomFrame accent="cyan">
+          <SkillsBentoSection />
+        </RoomFrame>
+
+        <SectionTransition variant="slide-up" />
+
+        <RoomFrame accent="indigo">
+          <InsightsSection />
+        </RoomFrame>
+
+        <SectionTransition variant="iris" />
+
+        <RoomFrame accent="amber">
+          <ConnectSection />
+        </RoomFrame>
+      </main>
+    </ScrollOrchestrator>
   );
 }

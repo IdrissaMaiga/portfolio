@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { FiGithub, FiLinkedin, FiMail, FiArrowRight } from "react-icons/fi";
+import ArtBg from "@/components/art-bg";
 
-// Typing animation effect
 const titles = [
   "Full Stack Engineer",
   "Software Developer",
@@ -20,156 +19,173 @@ export default function HeroSection() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState(150);
 
-  useEffect(() => {
-    // Typing animation logic
-    const currentTitle = titles[titleIndex];
+  const sectionRef = useRef<HTMLElement>(null);
 
-    // Handle typing and deleting
+  /* Framer-motion parallax: fade/scale/translate content as user scrolls away */
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, -150]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const contentScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.9]);
+
+  useEffect(() => {
+    const currentTitle = titles[titleIndex];
     const timer = setTimeout(() => {
-      // When deleting
       if (isDeleting) {
         setDisplayedTitle(currentTitle.substring(0, displayedTitle.length - 1));
-        setTypingSpeed(50); // Faster when deleting
-
-        // If empty, change to typing mode and go to next title
+        setTypingSpeed(50);
         if (displayedTitle.length === 0) {
           setIsDeleting(false);
           setTitleIndex((titleIndex + 1) % titles.length);
-          setTypingSpeed(150); // Reset typing speed
+          setTypingSpeed(150);
         }
-      }
-      // When typing
-      else {
-        setDisplayedTitle(currentTitle.substring(0, displayedTitle.length + 1));
-
-        // If complete, pause, then start deleting
+      } else {
+        setDisplayedTitle(
+          currentTitle.substring(0, displayedTitle.length + 1)
+        );
         if (displayedTitle.length === currentTitle.length) {
-          setTypingSpeed(2000); // Pause at the end
+          setTypingSpeed(2000);
           setTimeout(() => setIsDeleting(true), 2000);
         } else {
-          setTypingSpeed(150); // Normal typing speed
+          setTypingSpeed(150);
         }
       }
     }, typingSpeed);
-
     return () => clearTimeout(timer);
   }, [displayedTitle, isDeleting, titleIndex, typingSpeed]);
 
   return (
-    <section
-      id="home"
-      className="min-h-screen flex items-center relative pt-20 overflow-hidden"
-    >
-      {/* Decorative gradients */}
-      <div className="blur-circle blur-primary w-96 h-96 -top-48 -left-48 opacity-60"></div>
-      <div className="blur-circle blur-secondary w-96 h-96 top-1/4 right-0 opacity-40"></div>
+    <section ref={sectionRef} id="home" className="min-h-screen relative overflow-x-hidden">
+      <div className="absolute inset-0 z-0 bg-[#030712]" />
+      <ArtBg variant="hero" />
+      <div className="absolute inset-0 z-[2] bg-gradient-to-r from-[#030712]/80 via-[#030712]/30 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 z-[2] bg-gradient-to-t from-[#030712]/50 via-transparent to-transparent pointer-events-none" />
 
-      <div className="container mx-auto px-4 md:px-6 py-12 flex flex-col md:flex-row items-center justify-between relative z-10">
-        {/* Hero content */}
+      <motion.div
+        style={{ y: contentY, opacity: contentOpacity, scale: contentScale }}
+        className="relative z-[4] container mx-auto px-4 md:px-6 min-h-screen flex items-center pt-20 pointer-events-none"
+      >
         <motion.div
-          className="w-full md:w-3/5 mb-12 md:mb-0"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          className="w-full md:w-2/3 lg:w-3/5 max-w-2xl pointer-events-auto"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
         >
-          <span className="inline-block px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-medium mb-6">
+          <motion.span
+            className="inline-block px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-blue-400 text-sm font-medium mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
             Hello, I&apos;m Idrissa Maiga
-          </span>
+          </motion.span>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-            Building digital experiences with
-            <span className="gradient-text gradient-text-primary"> passion</span> and
-            <span className="gradient-text gradient-text-accent"> precision</span>
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-[1.1] text-white">
+            Building digital
+            <br />
+            experiences with
+            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+              {" "}
+              passion
+            </span>{" "}
+            and
+            <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
+              {" "}
+              precision
+            </span>
           </h1>
 
-          <div className="h-8 mb-8">
-            <span className="text-xl font-medium font-mono text-gray-700 dark:text-gray-300">
-              {displayedTitle}
-              <span className="inline-block w-1 h-6 bg-blue-500 dark:bg-blue-400 ml-1 animate-pulse"></span>
+          <div className="h-10 mb-8">
+            <span className="text-xl sm:text-2xl font-mono text-blue-300/90">
+              &gt; {displayedTitle}
+              <span className="inline-block w-0.5 h-6 bg-blue-400 ml-1 animate-pulse" />
             </span>
           </div>
 
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-xl">
+          <p className="text-base sm:text-lg text-gray-300/80 mb-10 max-w-xl leading-relaxed">
             Transforming ideas into robust, elegant solutions with modern
-            technologies and a focus on performance, security, and user experience.
+            technologies and a focus on performance, security, and user
+            experience.
           </p>
 
-          <div className="flex flex-wrap gap-4">
-            <a href="#projects" className="btn btn-primary">
-              View Projects
-              <FiArrowRight className="ml-2" />
+          <motion.div
+            className="flex flex-wrap gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
+          >
+            <a
+              href="/#projects"
+              className="group relative px-6 sm:px-8 py-3 rounded-xl bg-blue-600 text-white font-medium overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] hover:bg-blue-500"
+            >
+              <span className="relative z-10 flex items-center">
+                View Projects
+                <FiArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </span>
             </a>
-
-            <a href="#contact" className="btn btn-outline">
+            <a
+              href="/#connect"
+              className="px-6 sm:px-8 py-3 rounded-xl border border-white/20 text-white font-medium backdrop-blur-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+            >
               Get In Touch
             </a>
-          </div>
+          </motion.div>
 
-          <div className="flex mt-10 space-x-5">
+          <motion.div
+            className="flex mt-10 sm:mt-12 space-x-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 1.5 }}
+          >
             <a
               href="https://github.com/IdrissaMaiga"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+              className="p-2.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-blue-400 hover:border-blue-400/30 hover:bg-blue-400/10 transition-all duration-300"
               aria-label="GitHub"
             >
-              <FiGithub className="w-6 h-6" />
+              <FiGithub className="w-5 h-5" />
             </a>
             <a
-              href="https://linkedin.com/in/idrissa-maiga"
+              href="https://linkedin.com/in/idrissa-maiga-16581b245"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+              className="p-2.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-blue-400 hover:border-blue-400/30 hover:bg-blue-400/10 transition-all duration-300"
               aria-label="LinkedIn"
             >
-              <FiLinkedin className="w-6 h-6" />
+              <FiLinkedin className="w-5 h-5" />
             </a>
             <a
-              href="mailto:maigadrisking@gmail.com"
-              className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+              href="mailto:idrissa.maiga@iditechs.com"
+              className="p-2.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-blue-400 hover:border-blue-400/30 hover:bg-blue-400/10 transition-all duration-300"
               aria-label="Email"
             >
-              <FiMail className="w-6 h-6" />
+              <FiMail className="w-5 h-5" />
             </a>
-          </div>
+          </motion.div>
         </motion.div>
+      </motion.div>
 
-        {/* Hero image */}
+      {/* Scroll indicator */}
+      <motion.div
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[4] pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2 }}
+        style={{ opacity: contentOpacity }}
+      >
         <motion.div
-          className="w-full md:w-2/5 flex justify-center"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
         >
-          <div className="relative w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 animate-float">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 blur-lg opacity-70"></div>
-            <div className="absolute inset-0 rounded-full overflow-hidden bg-white dark:bg-gray-900 p-2">
-              <div className="absolute inset-0 rounded-full overflow-hidden">
-                <Image
-                  src="/logos/id_.jpg"
-                  alt="Idrissa Maiga"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent"></div>
-              </div>
-            </div>
+          <div className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-2">
+            <div className="w-1 h-2.5 bg-white/50 rounded-full" />
           </div>
         </motion.div>
-      </div>
+      </motion.div>
 
-      {/* Wave divider */}
-      <div className="wave">
-        <svg
-          data-name="Layer 1"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 1200 120"
-          preserveAspectRatio="none"
-        >
-          <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
-        </svg>
-      </div>
     </section>
   );
 }

@@ -48,8 +48,8 @@ export default function LikeButton({ postSlug }: { postSlug: string }) {
       disabled={loading}
       className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-medium ${
         liked
-          ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
-          : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-red-300 dark:hover:border-red-700"
+          ? "bg-red-500/15 border-red-500/30 text-red-400"
+          : "bg-white/5 border-white/10 text-gray-400 hover:border-red-500/30"
       }`}
     >
       <svg

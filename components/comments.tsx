@@ -38,13 +38,13 @@ function CommentForm({
 
   if (!session) {
     return (
-      <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-center">
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
+      <div className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
+        <p className="text-gray-400 text-sm mb-3">
           Sign in to join the conversation
         </p>
         <button
           onClick={() => signIn("google")}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -97,7 +97,7 @@ function CommentForm({
             onChange={(e) => setContent(e.target.value)}
             placeholder={placeholder || "Write a comment..."}
             rows={parentId ? 2 : 3}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+            className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
           />
           <div className="mt-2 flex items-center gap-2">
             <button
@@ -138,7 +138,7 @@ function CommentItem({
   const maxDepth = 3;
 
   return (
-    <div className={depth > 0 ? "ml-6 sm:ml-10 border-l-2 border-gray-100 dark:border-gray-800 pl-4" : ""}>
+    <div className={depth > 0 ? "ml-6 sm:ml-10 border-l-2 border-white/[0.06] pl-4" : ""}>
       <div className="flex gap-3">
         {comment.author.image ? (
           <Image
@@ -155,7 +155,7 @@ function CommentItem({
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            <span className="text-sm font-medium text-white truncate">
               {comment.author.name || "Anonymous"}
             </span>
             <time className="text-xs text-gray-400 shrink-0">
@@ -166,7 +166,7 @@ function CommentItem({
               })}
             </time>
           </div>
-          <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
+          <p className="text-sm text-gray-300 mt-1 whitespace-pre-wrap">
             {comment.content}
           </p>
           {depth < maxDepth && (
@@ -252,8 +252,8 @@ export default function Comments({ postSlug }: { postSlug: string }) {
   const totalCount = countAllComments(comments);
 
   return (
-    <section className="mt-12 border-t border-gray-200 dark:border-gray-800 pt-8">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+    <section className="mt-12 border-t border-white/[0.06] pt-8">
+      <h2 className="text-xl font-semibold text-white mb-6">
         Comments ({totalCount})
       </h2>
 
@@ -268,16 +268,16 @@ export default function Comments({ postSlug }: { postSlug: string }) {
         <div className="space-y-4">
           {[1, 2].map((i) => (
             <div key={i} className="animate-pulse flex gap-3">
-              <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800" />
+              <div className="w-9 h-9 rounded-full bg-white/10" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-800 rounded" />
-                <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded" />
+                <div className="h-4 w-24 bg-white/10 rounded" />
+                <div className="h-4 w-full bg-white/10 rounded" />
               </div>
             </div>
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
+        <p className="text-gray-400 text-sm">
           No comments yet. Be the first to share your thoughts!
         </p>
       ) : (

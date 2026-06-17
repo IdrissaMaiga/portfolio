@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Navbar from "@/components/navbar-section";
-import Footer from "@/components/footer";
+
+
 
 export const metadata = {
   title: "Privacy Policy | Idrissa Maiga",
@@ -8,8 +8,6 @@ export const metadata = {
 
 export default function PrivacyPolicy() {
   return (
-    <>
-    <Navbar />
     <main className="min-h-screen bg-white dark:bg-gray-950 pt-24 pb-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl prose prose-gray dark:prose-invert">
         <h1>Privacy Policy</h1>
@@ -91,7 +89,5 @@ export default function PrivacyPolicy() {
         </div>
       </div>
     </main>
-    <Footer />
-    </>
   );
 }

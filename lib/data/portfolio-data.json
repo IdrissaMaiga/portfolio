@@ -1,0 +1,344 @@
+{
+  "personal": {
+    "name": "Idrissa Maiga",
+    "title": "Full-Stack Engineer",
+    "email": "idrissa.maiga@iditechs.com",
+    "location": "Budapest, Hungary",
+    "birthPlace": "Bamako, Mali",
+    "languages": [
+      { "name": "English", "level": "Fluent" },
+      { "name": "French", "level": "Native" },
+      { "name": "Bambara", "level": "Native" },
+      { "name": "Hungarian", "level": "Beginner" }
+    ]
+  },
+  "experience": [
+    {
+      "id": "4d-consulting",
+      "title": "Software Developer Intern",
+      "company": "4D Consulting Kft.",
+      "dates": "Aug 2025 – Present",
+      "location": "Budapest",
+      "description": "Leading development of INDUSAC Innovation Ecosystem Matchmaking Platform connecting startups, investors, and research institutions across European innovation markets. Architecting scalable microservices backend using Spring Boot with PostgreSQL, implementing intelligent matching algorithms.",
+      "current": true
+    },
+    {
+      "id": "eismea",
+      "title": "Full Stack Engineer",
+      "company": "EISMEA",
+      "dates": "Jan 2025 – Jul 2025",
+      "location": "Hungary",
+      "description": "Built horizoneurope.io, an AI-powered EU funding guidance platform serving 5,000+ monthly users. Developed smart context management engine processing 500+ funding opportunities with NLP-based categorization. Created high-speed scrapers and a lightweight UI with real-time API responses under 2ms.",
+      "current": false
+    }
+  ],
+  "education": {
+    "degree": "BSc Computer Software Engineering",
+    "school": "Óbuda University (Óbudai Egyetem)",
+    "dates": "Sep 2023 – Feb 2027",
+    "gpa": "8.7/10",
+    "coursework": "",
+    "activities": ""
+  },
+  "certifications": [
+    {
+      "name": "HÖOK SHMN Mentor Camp 2025",
+      "description": "Hungarian Student Leadership & Mentorship Program"
+    },
+    {
+      "name": "INDUSAC Co-Creation Project Certificate",
+      "description": "Innovation Ecosystem Development"
+    },
+    {
+      "name": "Spring Boot and Microservices Development",
+      "description": "Comprehensive Backend Architecture"
+    },
+    {
+      "name": "Full-Stack Web Development with JavaScript",
+      "description": "MERN Stack Specialization"
+    },
+    {
+      "name": "ASP.NET Core with Orchard Core CMS",
+      "description": "Advanced .NET Development"
+    },
+    {
+      "name": "Cisco Networking Certification (CCNA)",
+      "description": "Network Fundamentals"
+    },
+    {
+      "name": "Kennedy Lugar YES Program Scholar",
+      "description": "Cultural Exchange Program, USA"
+    }
+  ],
+  "projects": [
+    {
+      "id": "horizoneurope",
+      "title": "HorizonEurope.io",
+      "shortDesc": "AI-powered EU funding guidance platform serving 5,000+ monthly users with real-time API responses under 2ms.",
+      "description": "Built during my role as Full Stack Engineer at EISMEA (European Innovation Council). The platform helps researchers find the right EU funding opportunities using AI-powered matching, smart context management, and automated document processing. Features high-speed scrapers for EU grant data extraction and an intelligent categorization engine processing 500+ funding opportunities.",
+      "techStack": ["Spring Boot", "React.js", "TypeScript", "PostgreSQL", "AWS", "Docker"],
+      "features": [
+        "Smart context management engine for intelligent interactions",
+        "NLP-based categorization of 500+ funding opportunities",
+        "High-speed scraper bypassing captchas for EU grant data",
+        "Real-time API responses under 2ms",
+        "Document processing for EU funding calls",
+        "Serving 5,000+ monthly users"
+      ],
+      "challenges": [
+        "Processing large EU datasets efficiently",
+        "Building captcha-bypassing scrapers",
+        "Achieving sub-2ms API response times",
+        "Handling complex multi-language funding documents"
+      ],
+      "solution": "",
+      "image": "/logos/HorizonEurope Home.png",
+      "additionalImages": ["/logos/HorizonEurope Login.png"],
+      "githubLink": null,
+      "liveLink": "https://horizoneurope.io"
+    },
+    {
+      "id": "neptun-api",
+      "title": "Neptun API",
+      "shortDesc": "The most complete Python wrapper for Hungary's Neptun university system — 1,100+ endpoints reverse-engineered across 75+ controllers.",
+      "description": "A comprehensive Python library that reverse-engineers the Angular web client of Hungary's Neptun university management system. Covers 25+ functional areas including messaging (18+ methods), calendar (29), courses (60+), exams (30+), grades (21), financials (50+), and more. Features automated JWT authentication with transparent token refresh, Playwright-based survey automation, and MCP server support for AI assistant integration.",
+      "techStack": ["Python", "Playwright", "MCP Protocol"],
+      "features": [
+        "1,100+ API endpoints across 75+ controllers",
+        "Automated JWT authentication with token refresh",
+        "MCP server for Claude Desktop and Cursor integration",
+        "Playwright-based automated survey filling",
+        "Support for multiple Hungarian universities (Óbuda, BME, ELTE)",
+        "Modular pip installation with optional extras"
+      ],
+      "challenges": [
+        "Reverse-engineering undocumented Angular API calls",
+        "Handling complex JWT authentication flows",
+        "Supporting multiple university instances",
+        "Building reliable browser automation"
+      ],
+      "solution": "",
+      "image": "/logos/skills.png",
+      "additionalImages": [],
+      "githubLink": "https://github.com/IdrissaMaiga/neptun-api",
+      "liveLink": null
+    },
+    {
+      "id": "gmail-ai",
+      "title": "Gmail AI Assistant",
+      "shortDesc": "AI-powered Gmail automation using dual LLMs for smart email categorization, priority detection, and response generation.",
+      "description": "An intelligent email management platform that leverages DeepSeek R1 and Mistral AI to automate Gmail workflows. Features secure Google OAuth 2.0 integration, AI-powered email categorization and prioritization, smart response generation, and batch processing for 1,000+ emails.",
+      "techStack": ["Next.js", "TypeScript", "Google OAuth", "DeepSeek R1", "Mistral AI", "Tailwind CSS"],
+      "features": [
+        "Secure Google OAuth 2.0 authentication",
+        "Dual LLM support (DeepSeek R1 + Mistral AI)",
+        "AI-powered email categorization and prioritization",
+        "Smart response generation",
+        "Batch processing for 1,000+ emails",
+        "Dark mode UI with Radix components"
+      ],
+      "challenges": [
+        "Integrating multiple AI services efficiently",
+        "Managing API rate limits and costs",
+        "Ensuring data privacy with OAuth",
+        "Processing large email volumes"
+      ],
+      "solution": "",
+      "image": "/logos/gmail.png",
+      "additionalImages": [],
+      "githubLink": "https://github.com/IdrissaMaiga/GmailAi-MistraiAI",
+      "liveLink": null
+    },
+    {
+      "id": "trading-bot",
+      "title": "Trading Bot",
+      "shortDesc": "Automated BUY-only grid trading bot for XAUUSD on MetaTrader 5 with real-time dashboard and tick-based backtester.",
+      "description": "A sophisticated grid-trading strategy bot for gold (XAUUSD) on MetaTrader 5. Uses pure grid mechanics — no indicators, no prediction. Features automatic pause/resume after stop-loss events, a real-time web dashboard for monitoring, a tick-based backtester using real MT5 data, and a comprehensive test suite with 32 passing tests.",
+      "techStack": ["Python", "MetaTrader 5", "WebSockets", "HTML/CSS"],
+      "features": [
+        "Pure grid mechanics trading strategy",
+        "Real-time web dashboard on localhost:8765",
+        "Tick-based backtester with real MT5 data",
+        "32 passing automated tests",
+        "Automatic pause/resume after stop-loss",
+        "CLI configuration and demo mode"
+      ],
+      "challenges": [
+        "Implementing reliable grid trading logic",
+        "Real-time market data processing",
+        "Building accurate backtesting system",
+        "Risk management with shared stop-loss"
+      ],
+      "solution": "",
+      "image": "/logos/skills.png",
+      "additionalImages": [],
+      "githubLink": "https://github.com/IdrissaMaiga/tradingBot",
+      "liveLink": null
+    },
+    {
+      "id": "filmu",
+      "title": "Filmu",
+      "shortDesc": "Full-stack VOD streaming platform with HLS video, live TV channels, subscription management, and admin dashboard.",
+      "description": "A comprehensive Netflix-like streaming platform built with the MERN stack. Users can browse movies and TV series, watch live channels via HLS streaming, manage subscriptions, and track watch history. Includes an admin dashboard for user and financial management, a referral program, and M3U playlist processing.",
+      "techStack": ["React", "Node.js", "Express", "MongoDB", "Prisma", "HLS.js"],
+      "features": [
+        "HLS adaptive video streaming (ArtPlayer, Video.js, HLS.js)",
+        "Live TV channels with country-based filtering",
+        "JWT authentication with role-based access",
+        "Subscription system with payment tracking",
+        "Admin dashboard with analytics",
+        "React Native mobile app (companion repo)"
+      ],
+      "challenges": [
+        "Implementing efficient HLS streaming",
+        "Building recommendation engine",
+        "Cross-platform mobile + web support",
+        "Subscription and payment management"
+      ],
+      "solution": "",
+      "image": "/logos/Filmu.png",
+      "additionalImages": [],
+      "githubLink": "https://github.com/IdrissaMaiga/FilmuApp-MERN-STACK",
+      "liveLink": null
+    },
+    {
+      "id": "signalapp",
+      "title": "SignalApp",
+      "shortDesc": "Real-time forex and binary trading signals mobile app with Firebase, role-based access, and push notifications.",
+      "description": "A mobile trading signals platform delivering real-time market insights via Firebase Realtime Database. Features Google Sign-In authentication, admin/sender signal management panel, role-based access control, and a responsive UI with haptic feedback. Built with React Native and Expo 52.",
+      "techStack": ["React Native", "Expo 52", "TypeScript", "Firebase", "Google Sign-In"],
+      "features": [
+        "Real-time signal delivery via Firebase",
+        "Google Sign-In authentication",
+        "Admin/sender signal management panel",
+        "Role-based access control",
+        "Push notifications for critical signals",
+        "Cross-device responsive UI with haptic feedback"
+      ],
+      "challenges": [
+        "Ensuring minimal latency signal delivery",
+        "Real-time data sync across devices",
+        "Implementing reliable push notifications",
+        "Balancing information density with UI clarity"
+      ],
+      "solution": "",
+      "image": "/logos/signal.png",
+      "additionalImages": [],
+      "githubLink": "https://github.com/IdrissaMaiga/SignalApp",
+      "liveLink": null
+    }
+  ],
+  "skillCategories": [
+    {
+      "id": "languages",
+      "name": "Programming Languages",
+      "color": "blue",
+      "darkColor": "blue",
+      "skills": [
+        { "name": "Java", "level": 95 },
+        { "name": "JavaScript", "level": 90 },
+        { "name": "TypeScript", "level": 85 },
+        { "name": "Python", "level": 75 },
+        { "name": "SQL", "level": 85 },
+        { "name": "C#", "level": 70 }
+      ]
+    },
+    {
+      "id": "backend",
+      "name": "Backend Frameworks",
+      "color": "emerald",
+      "darkColor": "emerald",
+      "skills": [
+        { "name": "Spring Boot", "level": 90 },
+        { "name": "Node.js", "level": 85 },
+        { "name": "Express.js", "level": 80 },
+        { "name": ".NET Core", "level": 75 },
+        { "name": "ASP.NET", "level": 70 },
+        { "name": "Laravel", "level": 65 }
+      ]
+    },
+    {
+      "id": "frontend",
+      "name": "Frontend Technologies",
+      "color": "purple",
+      "darkColor": "purple",
+      "skills": [
+        { "name": "React.js", "level": 88 },
+        { "name": "Next.js", "level": 85 },
+        { "name": "Vue.js", "level": 75 },
+        { "name": "React Native", "level": 80 },
+        { "name": "HTML5", "level": 95 },
+        { "name": "CSS3", "level": 90 },
+        { "name": "Tailwind CSS", "level": 85 }
+      ]
+    },
+    {
+      "id": "database",
+      "name": "Databases",
+      "color": "amber",
+      "darkColor": "amber",
+      "skills": [
+        { "name": "MySQL", "level": 92 },
+        { "name": "PostgreSQL", "level": 88 },
+        { "name": "MongoDB", "level": 85 },
+        { "name": "Redis", "level": 80 },
+        { "name": "Firebase", "level": 75 }
+      ]
+    },
+    {
+      "id": "cloud",
+      "name": "Cloud & DevOps",
+      "color": "indigo",
+      "darkColor": "indigo",
+      "skills": [
+        { "name": "AWS", "level": 80 },
+        { "name": "Docker", "level": 85 },
+        { "name": "Kubernetes", "level": 75 },
+        { "name": "Git", "level": 90 },
+        { "name": "GitHub Actions", "level": 80 }
+      ]
+    },
+    {
+      "id": "ai",
+      "name": "AI/ML Technologies",
+      "color": "rose",
+      "darkColor": "rose",
+      "skills": [
+        { "name": "OpenAI GPT", "level": 75 },
+        { "name": "Mistral AI", "level": 70 },
+        { "name": "DeepSeek R1", "level": 70 },
+        { "name": "TensorFlow", "level": 65 },
+        { "name": "NLP Models", "level": 70 }
+      ]
+    }
+  ],
+  "socialLinks": [
+    {
+      "name": "GitHub",
+      "href": "https://github.com/IdrissaMaiga",
+      "platform": "github"
+    },
+    {
+      "name": "LinkedIn",
+      "href": "https://www.linkedin.com/in/idrissa-maiga-16581b245/",
+      "platform": "linkedin"
+    },
+    {
+      "name": "Twitter/X",
+      "href": "https://x.com/a_idrissamaiga",
+      "platform": "twitter"
+    },
+    {
+      "name": "Email",
+      "href": "mailto:idrissa.maiga@iditechs.com",
+      "platform": "email"
+    }
+  ],
+  "heroTitles": [
+    "Full Stack Engineer",
+    "Software Developer",
+    "AI Solutions Architect",
+    "Java Ecosystem Expert",
+    "Cloud-Native Developer"
+  ]
+}

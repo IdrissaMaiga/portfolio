@@ -31,107 +31,70 @@ const validateInput = (body: ContactForm) => {
   return errors.length > 0 ? errors[0] : null;
 };
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export async function POST(req: Request) {
   try {
-    // Debug: Log environment variables (without exposing values)
-    console.log('API route called at', new Date().toISOString());
-    console.log('EMAIL_USER exists:', !!process.env.EMAIL_USER);
-    console.log('EMAIL_PASS exists:', !!process.env.EMAIL_PASS);
-    
-    // Parse request body
     let body: ContactForm;
     try {
       body = await req.json();
-      console.log('Request body parsed successfully');
-    } catch (e) {
-      console.error('Error parsing JSON:', e);
-      return NextResponse.json(
-        { error: 'Invalid request body' },
-        { status: 400 }
-      );
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
-    
-    // Validate input
+
     const validationError = validateInput(body);
     if (validationError) {
-      console.log('Validation error:', validationError);
-      return NextResponse.json(
-        { error: validationError },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
-    
+
     const { name, email, subject, message } = body;
-    console.log('Validated input:', { name, email, subject: subject || '[No subject]' });
     
-    // Check email configuration
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('Email configuration missing');
-      return NextResponse.json(
-        { error: 'Server configuration error - contact the site administrator' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
-    
-    // Create a nodemailer transporter
+
     let transporter;
     try {
       transporter = nodemailer.createTransport({
         service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
       });
-      console.log('Transporter created successfully');
-    } catch (e) {
-      console.error('Error creating transporter:', e);
-      return NextResponse.json(
-        { error: 'Error setting up email service' },
-        { status: 500 }
-      );
+    } catch {
+      return NextResponse.json({ error: 'Email service unavailable' }, { status: 500 });
     }
 
-    // Email content
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeSubject = subject ? escapeHtml(subject) : '';
+    const safeMessage = escapeHtml(message);
+
     const mailOptions = {
       from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
       to: 'maigadrisking@gmail.com',
       subject: subject ? `Portfolio Contact: ${subject}` : 'New message from portfolio',
       replyTo: email,
-      text: `
-        Name: ${name}
-        Email: ${email}
-        
-        Message:
-        ${message}
-      `,
+      text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #3b82f6;">New Contact Message</h2>
-          <p><strong>From:</strong> ${name}</p>
-          <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-          ${subject ? `<p><strong>Subject:</strong> ${subject}</p>` : ''}
+          <p><strong>From:</strong> ${safeName}</p>
+          <p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+          ${safeSubject ? `<p><strong>Subject:</strong> ${safeSubject}</p>` : ''}
           <div style="margin-top: 20px; padding: 15px; background-color: #f9fafb; border-radius: 5px;">
-            <p style="white-space: pre-line;">${message}</p>
+            <p style="white-space: pre-line;">${safeMessage}</p>
           </div>
-          <div style="margin-top: 20px; font-size: 12px; color: #6b7280;">
-            <p>This message was sent from your portfolio contact form.</p>
-          </div>
+          <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">Sent from portfolio contact form.</p>
         </div>
       `,
     };
 
-    // Send email with error handling
     try {
-      console.log('Attempting to send email...');
       await transporter.sendMail(mailOptions);
-      console.log('Email sent successfully');
-    } catch (emailError) {
-      console.error('Error sending email:', emailError);
-      return NextResponse.json(
-        { error: 'Failed to send email. Please try again later or contact me directly at maigadrisking@gmail.com' },
-        { status: 500 }
-      );
+    } catch (err) {
+      console.error('Email send failed:', err);
+      return NextResponse.json({ error: 'Failed to send. Try again later.' }, { status: 500 });
     }
 
     // Return success response
