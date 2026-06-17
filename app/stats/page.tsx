@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
   FiUsers,
   FiEye,
@@ -96,7 +97,7 @@ function MiniBar({ data, maxVal }: { data: { date: string; count: number }[]; ma
 }
 
 export default function StatsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -338,7 +339,7 @@ export default function StatsPage() {
               {stats.recentUsers.map((u) => (
                 <li key={u.id} className="flex items-center gap-3">
                   {u.image ? (
-                    <img src={u.image} alt="" className="w-7 h-7 rounded-full" />
+                    <Image src={u.image} alt="" width={28} height={28} className="w-7 h-7 rounded-full" />
                   ) : (
                     <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs text-gray-400">
                       {u.name?.[0] || "?"}
