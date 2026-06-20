@@ -4,6 +4,17 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import nodemailer from "nodemailer";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email;
+  if (!email) {
+    return NextResponse.json({ subscribed: false });
+  }
+  const sub = await db.subscriber.findUnique({ where: { email } });
+  return NextResponse.json({ subscribed: !!sub?.verified, token: sub?.token || null });
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   let email: string;

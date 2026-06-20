@@ -20,12 +20,17 @@ export async function POST(req: NextRequest) {
       userId = (session?.user as { id?: string })?.id || null;
     } catch {}
 
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || req.headers.get("x-real-ip")
+      || null;
+
     await db.pageView.create({
       data: {
         path: path.slice(0, 500),
         referrer: referrer?.slice(0, 1000) || null,
         userId,
         sessionId: sessionId.slice(0, 100),
+        ip,
       },
     });
 

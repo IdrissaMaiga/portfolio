@@ -64,11 +64,13 @@ model PageView {
   referrer  String?
   userId    String?  @map("user_id")
   sessionId String   @map("session_id")
+  ip        String?
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([createdAt])
   @@index([path])
   @@index([sessionId])
+  @@index([ip])
   @@map("page_views")
 }
 

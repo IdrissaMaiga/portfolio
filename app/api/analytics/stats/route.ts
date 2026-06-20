@@ -20,7 +20,7 @@ export async function GET() {
   weekStart.setDate(weekStart.getDate() - 7);
   const monthStart = new Date(todayStart);
   monthStart.setDate(monthStart.getDate() - 30);
-  const activeThreshold = new Date(now.getTime() - 15 * 60 * 1000);
+  const activeNow = new Date(now.getTime() - 2 * 60 * 1000);
 
   const [
     totalUsers,
@@ -29,7 +29,7 @@ export async function GET() {
     todayViews,
     weekViews,
     monthViews,
-    activeSessions,
+    activeVisitors,
     uniqueVisitorsToday,
     uniqueVisitorsWeek,
     uniqueVisitorsMonth,
@@ -50,10 +50,10 @@ export async function GET() {
     db.pageView.count({ where: { createdAt: { gte: todayStart } } }),
     db.pageView.count({ where: { createdAt: { gte: weekStart } } }),
     db.pageView.count({ where: { createdAt: { gte: monthStart } } }),
-    db.pageView.groupBy({
-      by: ["sessionId"],
-      where: { createdAt: { gte: activeThreshold } },
-    }).then((r) => r.length),
+    db.pageView.findMany({
+      where: { createdAt: { gte: activeNow } },
+      select: { ip: true, sessionId: true, path: true, userId: true },
+    }),
     db.pageView.groupBy({
       by: ["sessionId"],
       where: { createdAt: { gte: todayStart } },
@@ -107,12 +107,43 @@ export async function GET() {
     }),
   ]);
 
+  const uniqueIPs = new Set(activeVisitors.map((v) => v.ip || v.sessionId));
+  const activeNowList = Array.from(
+    activeVisitors.reduce((map, v) => {
+      const key = v.ip || v.sessionId;
+      if (!map.has(key)) {
+        map.set(key, { ip: v.ip, path: v.path, userId: v.userId });
+      }
+      return map;
+    }, new Map<string, { ip: string | null; path: string; userId: string | null }>())
+  ).map(([, v]) => v);
+
+  const userIds = activeNowList.filter((v) => v.userId).map((v) => v.userId!);
+  const activeUsers = userIds.length > 0
+    ? await db.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, name: true, image: true },
+      })
+    : [];
+  const userMap = new Map(activeUsers.map((u) => [u.id, u]));
+
+  const activeNowDetails = activeNowList.map((v) => {
+    const user = v.userId ? userMap.get(v.userId) : null;
+    return {
+      ip: v.ip,
+      path: v.path,
+      name: user?.name || null,
+      image: user?.image || null,
+      isRegistered: !!user,
+    };
+  });
+
   return NextResponse.json({
     overview: {
       totalUsers,
       totalSubscribers,
       totalPageViews,
-      activeSessions,
+      activeNow: uniqueIPs.size,
       todayViews,
       weekViews,
       monthViews,
@@ -129,6 +160,7 @@ export async function GET() {
       totalChatSessions,
       totalChatMessages,
     },
+    activeNowDetails,
     recentUsers,
     topPages: topPages.map((p) => ({ path: p.path, count: p._count.path })),
     todayTopPages: todayTopPages.map((p) => ({ path: p.path, count: p._count.path })),

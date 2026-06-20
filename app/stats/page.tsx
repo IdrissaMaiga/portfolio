@@ -20,12 +20,20 @@ import {
   FiRefreshCw,
 } from "react-icons/fi";
 
+interface ActiveVisitor {
+  ip: string | null;
+  path: string;
+  name: string | null;
+  image: string | null;
+  isRegistered: boolean;
+}
+
 interface Stats {
   overview: {
     totalUsers: number;
     totalSubscribers: number;
     totalPageViews: number;
-    activeSessions: number;
+    activeNow: number;
     todayViews: number;
     weekViews: number;
     monthViews: number;
@@ -42,6 +50,7 @@ interface Stats {
     totalChatSessions: number;
     totalChatMessages: number;
   };
+  activeNowDetails: ActiveVisitor[];
   recentUsers: {
     id: string;
     name: string | null;
@@ -210,7 +219,7 @@ export default function StatsPage() {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
           </span>
           <span className="text-sm text-green-400 font-medium">
-            {stats.overview.activeSessions} active {stats.overview.activeSessions === 1 ? "visitor" : "visitors"} now
+            {stats.overview.activeNow} {stats.overview.activeNow === 1 ? "visitor" : "visitors"} right now
           </span>
         </div>
 
@@ -219,7 +228,7 @@ export default function StatsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <StatCard icon={FiUsers} label="Registered Users" value={stats.overview.totalUsers} color="bg-blue-500/10 text-blue-400" />
           <StatCard icon={FiBell} label="Subscribers" value={stats.overview.totalSubscribers} sub="Email notifications" color="bg-pink-500/10 text-pink-400" />
-          <StatCard icon={FiActivity} label="Active Now" value={stats.overview.activeSessions} sub="Last 15 minutes" color="bg-green-500/10 text-green-400" />
+          <StatCard icon={FiActivity} label="Active Now" value={stats.overview.activeNow} sub="Last 2 minutes" color="bg-green-500/10 text-green-400" />
           <StatCard icon={FiEye} label="Views Today" value={stats.overview.todayViews} sub={`${stats.overview.uniqueVisitors.today} unique visitors`} color="bg-purple-500/10 text-purple-400" />
           <StatCard icon={FiCalendar} label="Views This Week" value={stats.overview.weekViews} sub={`${stats.overview.uniqueVisitors.week} unique visitors`} color="bg-indigo-500/10 text-indigo-400" />
           <StatCard icon={FiTrendingUp} label="Views This Month" value={stats.overview.monthViews} sub={`${stats.overview.uniqueVisitors.month} unique visitors`} color="bg-cyan-500/10 text-cyan-400" />
@@ -234,6 +243,41 @@ export default function StatsPage() {
           <StatCard icon={FiCpu} label="Chat Sessions" value={stats.engagement.totalChatSessions} color="bg-emerald-500/10 text-emerald-400" />
           <StatCard icon={FiMessageSquare} label="Chat Messages" value={stats.engagement.totalChatMessages} color="bg-teal-500/10 text-teal-400" />
         </div>
+
+        {/* Active Now Details */}
+        {stats.activeNowDetails.length > 0 && (
+          <>
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              Active Right Now
+            </h2>
+            <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-5 mb-8">
+              <div className="space-y-3">
+                {stats.activeNowDetails.map((v, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                    </span>
+                    {v.image ? (
+                      <Image src={v.image} alt="" width={24} height={24} className="w-6 h-6 rounded-full" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-[10px] text-gray-400">
+                        {v.isRegistered ? (v.name?.[0] || "U") : "?"}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-gray-200">
+                        {v.name || (v.isRegistered ? "Registered User" : "Anonymous")}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 truncate max-w-[200px]">{v.path}</span>
+                    {v.ip && <span className="text-[11px] text-gray-600 font-mono hidden sm:block">{v.ip}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Charts + Tables Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
