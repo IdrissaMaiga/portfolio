@@ -53,6 +53,7 @@ export async function GET() {
     db.pageView.findMany({
       where: { createdAt: { gte: activeNow } },
       select: { ip: true, sessionId: true, path: true, userId: true },
+      orderBy: { createdAt: "desc" },
     }),
     db.pageView.groupBy({
       by: ["sessionId"],

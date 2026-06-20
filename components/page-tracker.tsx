@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 
 function getSessionId() {
@@ -16,22 +16,32 @@ function getSessionId() {
 export default function PageTracker() {
   const pathname = usePathname();
   const lastPath = useRef("");
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    if (pathname === lastPath.current) return;
-    lastPath.current = pathname;
-
-    const sessionId = getSessionId();
+  const track = useCallback((path: string) => {
     fetch("/api/analytics/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        path: pathname,
+        path,
         referrer: document.referrer || null,
-        sessionId,
+        sessionId: getSessionId(),
       }),
     }).catch(() => {});
-  }, [pathname]);
+  }, []);
+
+  useEffect(() => {
+    if (pathname === lastPath.current) return;
+    lastPath.current = pathname;
+    track(pathname);
+
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => track(pathname), 90_000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [pathname, track]);
 
   return null;
 }
