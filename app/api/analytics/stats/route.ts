@@ -24,6 +24,7 @@ export async function GET() {
 
   const [
     totalUsers,
+    totalSubscribers,
     totalPageViews,
     todayViews,
     weekViews,
@@ -44,6 +45,7 @@ export async function GET() {
     topReferrers,
   ] = await Promise.all([
     db.user.count(),
+    db.subscriber.count({ where: { verified: true } }),
     db.pageView.count(),
     db.pageView.count({ where: { createdAt: { gte: todayStart } } }),
     db.pageView.count({ where: { createdAt: { gte: weekStart } } }),
@@ -108,6 +110,7 @@ export async function GET() {
   return NextResponse.json({
     overview: {
       totalUsers,
+      totalSubscribers,
       totalPageViews,
       activeSessions,
       todayViews,

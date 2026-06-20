@@ -80,6 +80,17 @@ model AppSetting {
   @@map("app_settings")
 }
 
+model Subscriber {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  verified   Boolean  @default(false)
+  token      String   @unique @default(cuid())
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("subscribers")
+}
+
 model Comment {
   id        String    @id @default(cuid())
   content   String

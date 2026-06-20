@@ -14,6 +14,7 @@ import {
   FiTrendingUp,
   FiClock,
   FiExternalLink,
+  FiBell,
   FiBarChart2,
   FiCalendar,
   FiRefreshCw,
@@ -22,6 +23,7 @@ import {
 interface Stats {
   overview: {
     totalUsers: number;
+    totalSubscribers: number;
     totalPageViews: number;
     activeSessions: number;
     todayViews: number;
@@ -216,6 +218,7 @@ export default function StatsPage() {
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Traffic</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <StatCard icon={FiUsers} label="Registered Users" value={stats.overview.totalUsers} color="bg-blue-500/10 text-blue-400" />
+          <StatCard icon={FiBell} label="Subscribers" value={stats.overview.totalSubscribers} sub="Email notifications" color="bg-pink-500/10 text-pink-400" />
           <StatCard icon={FiActivity} label="Active Now" value={stats.overview.activeSessions} sub="Last 15 minutes" color="bg-green-500/10 text-green-400" />
           <StatCard icon={FiEye} label="Views Today" value={stats.overview.todayViews} sub={`${stats.overview.uniqueVisitors.today} unique visitors`} color="bg-purple-500/10 text-purple-400" />
           <StatCard icon={FiCalendar} label="Views This Week" value={stats.overview.weekViews} sub={`${stats.overview.uniqueVisitors.week} unique visitors`} color="bg-indigo-500/10 text-indigo-400" />

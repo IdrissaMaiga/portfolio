@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getAllPosts } from "@/lib/blog";
 import BlogCard from "@/components/blog/blog-card";
+import SubscribeForm from "@/components/subscribe-form";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,11 @@ export default async function BlogPage() {
             Deep dives into the projects I build, the problems I solve, and the
             lessons I learn along the way.
           </p>
+        </div>
+
+        {/* Subscribe form */}
+        <div className="max-w-lg mx-auto mb-12 sm:mb-16">
+          <SubscribeForm />
         </div>
 
         {/* Posts grid or empty state */}

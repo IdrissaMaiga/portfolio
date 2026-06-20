@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllPosts, createPost, updatePost, deletePost } from "@/lib/blog";
+import { notifySubscribers } from "@/lib/notify-subscribers";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,13 @@ export async function POST(req: NextRequest) {
       image: image || "",
       slug,
     });
+
+    notifySubscribers({
+      title,
+      slug: result.slug,
+      description: description || "",
+      image: image || "",
+    }).catch((err) => console.error("Failed to notify subscribers:", err));
 
     return NextResponse.json({
       success: true,
