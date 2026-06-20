@@ -53,11 +53,6 @@ export default async function BlogPage() {
           </p>
         </div>
 
-        {/* Subscribe form */}
-        <div className="max-w-lg mx-auto mb-12 sm:mb-16">
-          <SubscribeForm />
-        </div>
-
         {/* Posts grid or empty state */}
         {posts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
@@ -91,6 +86,11 @@ export default async function BlogPage() {
             </p>
           </div>
         )}
+
+        {/* Subscribe */}
+        <div className="max-w-md mx-auto mt-16">
+          <SubscribeForm />
+        </div>
       </div>
     </main>
   );
