@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { FiBell, FiCheck, FiMail } from "react-icons/fi";
 
-export default function SubscribeForm() {
+export default function SubscribeForm({ variant = "full" }: { variant?: "inline" | "full" }) {
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -33,6 +33,27 @@ export default function SubscribeForm() {
       setMessage("Something went wrong. Try again.");
     }
   };
+
+  if (variant === "inline") {
+    if (status === "success") {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-green-400 text-sm">
+          <FiCheck className="w-3.5 h-3.5" /> Subscribed
+        </span>
+      );
+    }
+
+    return (
+      <button
+        onClick={() => session?.user?.email ? handleSubscribe() : signIn("google")}
+        disabled={status === "loading"}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.1] disabled:opacity-50 text-gray-300 hover:text-white rounded-lg text-sm transition-colors"
+      >
+        <FiBell className="w-3.5 h-3.5 text-blue-400" />
+        {status === "loading" ? "..." : "Subscribe"}
+      </button>
+    );
+  }
 
   if (status === "success") {
     return (

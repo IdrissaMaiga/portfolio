@@ -37,20 +37,25 @@ export default async function BlogPage() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 pb-16 sm:pb-24 relative z-10">
         {/* Section header */}
-        <div className="mb-12 sm:mb-16 text-center">
-          <span className="inline-block px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-blue-400 text-sm font-medium mb-6">
-            Blog
-          </span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 font-display">
-            Technical{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              Writing
+        <div className="mb-12 sm:mb-16">
+          <div className="text-center">
+            <span className="inline-block px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-blue-400 text-sm font-medium mb-6">
+              Blog
             </span>
-          </h1>
-          <p className="max-w-2xl mx-auto text-gray-400 text-base sm:text-lg leading-relaxed">
-            Deep dives into the projects I build, the problems I solve, and the
-            lessons I learn along the way.
-          </p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 font-display">
+              Technical{" "}
+              <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                Writing
+              </span>
+            </h1>
+            <p className="max-w-2xl mx-auto text-gray-400 text-base sm:text-lg leading-relaxed">
+              Deep dives into the projects I build, the problems I solve, and the
+              lessons I learn along the way.
+            </p>
+          </div>
+          <div className="flex justify-end max-w-5xl mx-auto mt-6">
+            <SubscribeForm variant="inline" />
+          </div>
         </div>
 
         {/* Posts grid or empty state */}
