@@ -14,7 +14,7 @@ export async function GET() {
     id: siteUrl,
     link: siteUrl,
     language: 'en',
-    image: `${siteUrl}/logos/id_.jpg`,
+    image: `${siteUrl}/logos/id_og.jpg`,
     favicon: `${siteUrl}/favicon.ico`,
     copyright: `All rights reserved ${new Date().getFullYear()}, Idrissa Maiga`,
     author: {

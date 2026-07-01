@@ -75,7 +75,7 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
 
   return (
     <div className={`shell ${sel ? "has-reader" : ""} ${showFolders ? "show-folders" : ""}`}>
-      <aside className="sidebar" onClick={() => setShowFolders(false)}>
+      <aside className="sidebar" onClick={(e) => { if (e.target === e.currentTarget) setShowFolders(false); }}>
         <div className="side-top"><span className="brand">iDi<b>Techs</b> Mail</span></div>
         <div style={{ padding: "0 12px" }}>
           <select value={account} onChange={(e) => setAccount(e.target.value)} style={{ width: "100%" }} title="Choisir une boîte">
