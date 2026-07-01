@@ -15,14 +15,14 @@ export function SignInPrompt() {
             <div className="login-sub">
               Connecté en tant que <b>{data?.user?.email}</b>, mais ce compte n&apos;est pas autorisé à gérer les boîtes.
             </div>
-            <button className="btn-primary" style={{ padding: 11, width: "100%" }} onClick={() => signIn("google")}>
+            <button className="btn-primary" onClick={() => signIn("google")}>
               Changer de compte
             </button>
           </>
         ) : (
           <>
             <div className="login-sub">Connectez-vous avec votre compte pour accéder à toutes vos boîtes iditechs.com.</div>
-            <button className="btn-primary" style={{ padding: 11, width: "100%" }} onClick={() => signIn("google")}>
+            <button className="btn-primary" onClick={() => signIn("google")}>
               Se connecter
             </button>
           </>

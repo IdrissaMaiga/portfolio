@@ -98,12 +98,12 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
     <div className={`shell ${sel ? "has-reader" : ""} ${showFolders ? "show-folders" : ""}`}>
       <aside className="sidebar" onClick={(e) => { if (e.target === e.currentTarget) setShowFolders(false); }}>
         <div className="side-top"><span className="brand">iDi<b>Techs</b> Mail</span></div>
-        <div style={{ padding: "0 12px" }}>
-          <select value={account} onChange={(e) => setAccount(e.target.value)} style={{ width: "100%" }} title="Choisir une boîte">
+        <div className="side-actions">
+          <select className="acct-switch" value={account} onChange={(e) => setAccount(e.target.value)} title="Choisir une boîte">
             {accounts.map((a) => <option key={a.accountId} value={a.accountId}>{a.email}</option>)}
           </select>
+          <button className="compose-btn btn-primary" onClick={() => setCompose(true)}><FiEdit /> Nouveau message</button>
         </div>
-        <button className="compose-btn btn-primary" onClick={() => setCompose(true)}><FiEdit /> Nouveau message</button>
         <nav className="folders">
           {folders.map((f) => (
             <div key={f.id} className={`folder ${f.id === active ? "active" : ""}`} onClick={() => { setActive(f.id); setShowFolders(false); }}>
@@ -122,11 +122,15 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
 
       <section className="list">
         <div className="list-head">
-          <span>
-            <button className="back-btn icon-btn" style={{ marginRight: 8 }} onClick={() => setShowFolders((s) => !s)}><FiMenu /></button>
-            {folderName} <span style={{ color: "var(--dim2)", fontWeight: 400, fontSize: 12 }}>· {currentEmail}</span>
-          </span>
-          <small>{total} msg <button className="icon-btn" style={{ marginLeft: 6 }} onClick={() => loadList(account, active)} title="Rafraîchir"><FiRefreshCw /></button></small>
+          <div className="lh-left">
+            <button className="back-btn icon-btn" onClick={() => setShowFolders((s) => !s)}><FiMenu /></button>
+            <span className="lh-title">{folderName}</span>
+            <span className="lh-sub">{currentEmail}</span>
+          </div>
+          <div className="lh-right">
+            <span className="lh-count">{total}</span>
+            <button className="icon-btn" onClick={() => loadList(account, active)} title="Rafraîchir"><FiRefreshCw /></button>
+          </div>
         </div>
         <div className="msgs">
           {loadingList ? <div className="empty">Chargement…</div>
