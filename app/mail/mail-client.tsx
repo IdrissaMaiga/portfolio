@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 import {
   FiEdit, FiSettings, FiArrowLeft, FiMenu, FiRefreshCw, FiTrash2, FiCornerUpLeft,
   FiPaperclip, FiLogOut, FiSend, FiShuffle, FiInbox, FiFileText, FiAlertOctagon, FiArchive, FiFolder,
-  FiChevronDown, FiCheck, FiX, FiDownload,
+  FiChevronDown, FiCheck, FiX, FiDownload, FiServer, FiCopy,
 } from "react-icons/fi";
 
 const fmtSize = (n: number) => (n < 1024 ? `${n} o` : n < 1048576 ? `${(n / 1024).toFixed(0)} Ko` : `${(n / 1048576).toFixed(1)} Mo`);
@@ -54,6 +54,7 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
   const [compose, setCompose] = useState(false);
   const [showFolders, setShowFolders] = useState(false);
   const [admin, setAdmin] = useState(false);
+  const [settings, setSettings] = useState(false);
 
   const loadFolders = useCallback(async (acc: string) => {
     if (!acc) return;
@@ -96,6 +97,7 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
   const currentEmail = accounts.find((a) => a.accountId === account)?.email ?? "";
 
   if (admin) return <Admin onBack={() => setAdmin(false)} />;
+  if (settings) return <Settings account={accounts.find((a) => a.accountId === account)} onBack={() => setSettings(false)} />;
 
   return (
     <div className={`shell ${sel ? "has-reader" : ""} ${showFolders ? "show-folders" : ""}`}>
@@ -116,6 +118,7 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
         <div className="side-foot">
           <span className="me">{owner}</span>
           <button onClick={() => setAdmin(true)}><FiSettings /> Gérer les boîtes</button>
+          <button onClick={() => setSettings(true)}><FiServer /> Config. mail (IMAP)</button>
           <a href="/"><FiArrowLeft /> Retour au site</a>
           <button onClick={() => signOut({ callbackUrl: "/" })}><FiLogOut /> Se déconnecter</button>
         </div>
@@ -288,6 +291,57 @@ function Compose({ account, from, defaultTo, defaultSubject, onClose, onSent }: 
           <button className="btn-primary" onClick={send} disabled={sending || !to.trim()}><FiSend /> {sending ? "Envoi…" : "Envoyer"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Settings({ account, onBack }: { account?: Account; onBack: () => void }) {
+  const username = account?.name ?? "idrissa";
+  const email = account?.email ?? "";
+  const [copied, setCopied] = useState("");
+  const copy = (v: string, k: string) => { navigator.clipboard?.writeText(v); setCopied(k); setTimeout(() => setCopied(""), 1200); };
+  const rows: { label: string; value: string; k: string; dim?: boolean }[] = [
+    { label: "Serveur (IMAP)", value: "mail.agenticareer.com", k: "srv" },
+    { label: "Port", value: "993", k: "port" },
+    { label: "Sécurité", value: "SSL / TLS", k: "sec" },
+    { label: "Nom d'utilisateur", value: username, k: "user" },
+    { label: "Mot de passe", value: "Gérer les boîtes → Reset MDP", k: "pw", dim: true },
+  ];
+  return (
+    <div className="admin-wrap">
+      <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
+        <div className="brand">Configuration <b>mail</b></div>
+        <button onClick={onBack}><FiArrowLeft /> Retour au courrier</button>
+      </div>
+      <p className="cfg-intro">
+        Ajoutez <b>{email || "votre boîte"}</b> à Gmail, Outlook ou Apple Mail avec ces paramètres <b>IMAP</b>.
+        Point clé : le nom d&apos;utilisateur est <b>{username}</b> — pas l&apos;adresse email complète.
+      </p>
+
+      <h3 className="cfg-h">Réception (IMAP)</h3>
+      <div className="cfg-card">
+        {rows.map((r) => (
+          <div className="cfg-row" key={r.k}>
+            <span className="cfg-label">{r.label}</span>
+            <span className={`cfg-value ${r.dim ? "dim" : ""}`}>{r.value}</span>
+            {!r.dim && <button className="icon-btn" onClick={() => copy(r.value, r.k)} title="Copier">{copied === r.k ? <FiCheck /> : <FiCopy />}</button>}
+          </div>
+        ))}
+      </div>
+
+      <h3 className="cfg-h">Envoi (SMTP)</h3>
+      <div className="cfg-note">
+        L&apos;envoi depuis une application externe n&apos;est pas encore activé sur le serveur partagé.
+        En attendant, <b>envoyez depuis ce webmail</b> (bouton « Nouveau message »).
+      </div>
+
+      <h3 className="cfg-h">Étapes rapides</h3>
+      <ol className="cfg-steps">
+        <li><b>Gmail</b> (app ou web) : Paramètres → Ajouter un compte → <i>Autre (IMAP)</i> → serveur ci-dessus, utilisateur <b>{username}</b>.</li>
+        <li><b>Outlook</b> : Ajouter un compte → Options avancées → <i>Configurer manuellement</i> → IMAP.</li>
+        <li><b>Apple Mail</b> : Réglages → Mail → Comptes → Ajouter un compte → <i>Autre</i> → IMAP.</li>
+      </ol>
+      <p className="cfg-foot">Pour le mot de passe : <b>Gérer les boîtes</b> → <b>Reset MDP</b> (affiché une seule fois).</p>
     </div>
   );
 }
