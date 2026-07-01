@@ -9,6 +9,27 @@ import {
 } from "react-icons/fi";
 
 const fmtSize = (n: number) => (n < 1024 ? `${n} o` : n < 1048576 ? `${(n / 1024).toFixed(0)} Ko` : `${(n / 1048576).toFixed(1)} Mo`);
+const MAX_UPLOAD = 4_200_000; // Vercel serverless request-body limit (~4.5 MB) — stay under it
+
+// Downscale/recompress large images in the browser so they fit under the upload limit.
+async function compressImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.size < 1_200_000) return file;
+  try {
+    const img = await createImageBitmap(file);
+    const maxDim = 1600;
+    let { width, height } = img;
+    if (Math.max(width, height) > maxDim) {
+      const s = maxDim / Math.max(width, height);
+      width = Math.round(width * s); height = Math.round(height * s);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width; canvas.height = height;
+    canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+    const blob: Blob | null = await new Promise((res) => canvas.toBlob((b) => res(b), "image/jpeg", 0.82));
+    if (blob && blob.size < file.size) return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch { /* keep original on failure */ }
+  return file;
+}
 
 const FOLDER_ICON: Record<string, ReactNode> = {
   inbox: <FiInbox />, sent: <FiSend />, drafts: <FiFileText />,
@@ -203,7 +224,17 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
           )}
       </section>
 
-      {compose && <Compose account={account} from={currentEmail} defaultTo={sel ? sel.from[0]?.email ?? "" : ""} defaultSubject={sel ? `Re: ${sel.subject}` : ""} onClose={() => setCompose(false)} onSent={() => setCompose(false)} />}
+      {compose && (
+        <Compose
+          account={account}
+          from={currentEmail}
+          defaultTo={sel ? sel.from[0]?.email ?? "" : ""}
+          defaultSubject={sel ? (sel.subject.startsWith("Re:") ? sel.subject : `Re: ${sel.subject}`) : ""}
+          defaultBody={sel ? `\n\n----- Message d'origine -----\nDe : ${addrLabel(sel.from)}\nDate : ${new Date(sel.receivedAt).toLocaleString("fr-FR")}\nObjet : ${sel.subject}\n\n${(sel.text || sel.preview || "").split("\n").map((l) => "> " + l).join("\n")}` : ""}
+          onClose={() => setCompose(false)}
+          onSent={() => setCompose(false)}
+        />
+      )}
     </div>
   );
 }
@@ -241,25 +272,47 @@ function AccountSwitcher({ accounts, account, onChange }: { accounts: Account[];
   );
 }
 
-function Compose({ account, from, defaultTo, defaultSubject, onClose, onSent }: { account: string; from: string; defaultTo: string; defaultSubject: string; onClose: () => void; onSent: () => void }) {
+function Compose({ account, from, defaultTo, defaultSubject, defaultBody, onClose, onSent }: { account: string; from: string; defaultTo: string; defaultSubject: string; defaultBody: string; onClose: () => void; onSent: () => void }) {
   const [to, setTo] = useState(defaultTo);
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState(defaultSubject);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(defaultBody);
   const [files, setFiles] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  function addFiles(list: FileList | null) { if (list) setFiles((p) => [...p, ...Array.from(list)]); }
+  async function addFiles(list: FileList | null) {
+    if (!list) return;
+    setBusy(true);
+    const arr = await Promise.all(Array.from(list).map(compressImage));
+    setFiles((p) => [...p, ...arr]);
+    setBusy(false);
+  }
   async function send() {
-    setError(""); setSending(true);
+    setError("");
+    const total = files.reduce((s, f) => s + f.size, 0);
+    if (total > MAX_UPLOAD) {
+      setError(`Pièces jointes trop lourdes (${fmtSize(total)}). Limite ~4 Mo au total via le web — réduisez ou envoyez en plusieurs fois.`);
+      return;
+    }
+    setSending(true);
     const fd = new FormData();
     fd.append("account", account); fd.append("to", to); fd.append("cc", cc);
     fd.append("subject", subject); fd.append("text", text);
     files.forEach((f) => fd.append("files", f));
-    const r = await fetch("/api/mail/send", { method: "POST", body: fd }).then((x) => x.json());
+    let r: { ok?: boolean; error?: string };
+    try {
+      const res = await fetch("/api/mail/send", { method: "POST", body: fd });
+      r = res.status === 413 ? { ok: false, error: "too_large" } : await res.json();
+    } catch { r = { ok: false, error: "network" }; }
     setSending(false);
     if (r.ok) onSent();
-    else setError(r.error === "no_recipient" ? "Destinataire invalide." : r.error === "too_large" ? "Pièces jointes trop volumineuses (max 25 Mo)." : "Échec de l'envoi.");
+    else setError(
+      r.error === "no_recipient" ? "Destinataire invalide." :
+      r.error === "too_large" ? "Pièces jointes trop lourdes (~4 Mo max via le web)." :
+      r.error === "network" ? "Erreur réseau (fichier peut-être trop lourd)." :
+      "Échec de l'envoi."
+    );
   }
   return (
     <div className="modal-bg" onClick={onClose}>
@@ -284,11 +337,11 @@ function Compose({ account, from, defaultTo, defaultSubject, onClose, onSent }: 
         {error && <p className="err">{error}</p>}
         <div className="modal-actions">
           <label className="btn attach-btn" style={{ marginRight: "auto" }}>
-            <FiPaperclip /> Joindre
+            <FiPaperclip /> {busy ? "Préparation…" : "Joindre"}
             <input type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
           </label>
           <button onClick={onClose}>Annuler</button>
-          <button className="btn-primary" onClick={send} disabled={sending || !to.trim()}><FiSend /> {sending ? "Envoi…" : "Envoyer"}</button>
+          <button className="btn-primary" onClick={send} disabled={sending || busy || !to.trim()}><FiSend /> {sending ? "Envoi…" : "Envoyer"}</button>
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ function parseAddrs(s: string): { name: null; email: string }[] {
     .map((email) => ({ name: null, email }));
 }
 
-const MAX_TOTAL = 25 * 1024 * 1024; // 25 MB total attachments
+const MAX_TOTAL = 4.4 * 1024 * 1024; // Vercel serverless request-body limit (~4.5 MB)
 
 export async function POST(req: NextRequest) {
   if (!(await getOwner())) return NextResponse.json({ ok: false }, { status: 401 });
