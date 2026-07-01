@@ -1,7 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { signOut } from "next-auth/react";
+import {
+  FiEdit, FiSettings, FiArrowLeft, FiMenu, FiRefreshCw, FiTrash2, FiCornerUpLeft,
+  FiPaperclip, FiLogOut, FiSend, FiShuffle, FiInbox, FiFileText, FiAlertOctagon, FiArchive, FiFolder,
+} from "react-icons/fi";
+
+const FOLDER_ICON: Record<string, ReactNode> = {
+  inbox: <FiInbox />, sent: <FiSend />, drafts: <FiFileText />,
+  trash: <FiTrash2 />, junk: <FiAlertOctagon />, archive: <FiArchive />,
+};
 
 type Account = { accountId: string; name: string; email: string; description: string | null };
 type Mailbox = { id: string; name: string; role: string | null; totalEmails: number; unreadEmails: number };
@@ -94,30 +103,30 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
             {accounts.map((a) => <option key={a.accountId} value={a.accountId}>{a.email}</option>)}
           </select>
         </div>
-        <button className="compose-btn btn-primary" onClick={() => setCompose(true)}>✏️ Nouveau message</button>
+        <button className="compose-btn btn-primary" onClick={() => setCompose(true)}><FiEdit /> Nouveau message</button>
         <nav className="folders">
           {folders.map((f) => (
             <div key={f.id} className={`folder ${f.id === active ? "active" : ""}`} onClick={() => { setActive(f.id); setShowFolders(false); }}>
-              <span>{FOLDER_FR[f.role ?? ""] || f.name}</span>
+              <span className="folder-label">{FOLDER_ICON[f.role ?? ""] ?? <FiFolder />} {FOLDER_FR[f.role ?? ""] || f.name}</span>
               {f.unreadEmails > 0 ? <span className="unread">{f.unreadEmails}</span> : <span className="count">{f.totalEmails || ""}</span>}
             </div>
           ))}
         </nav>
         <div className="side-foot">
           <span className="me">{owner}</span>
-          <button onClick={() => setAdmin(true)}>⚙️ Gérer les boîtes</button>
-          <a href="/">← Retour au site</a>
-          <button onClick={() => signOut({ callbackUrl: "/" })}>Se déconnecter</button>
+          <button onClick={() => setAdmin(true)}><FiSettings /> Gérer les boîtes</button>
+          <a href="/"><FiArrowLeft /> Retour au site</a>
+          <button onClick={() => signOut({ callbackUrl: "/" })}><FiLogOut /> Se déconnecter</button>
         </div>
       </aside>
 
       <section className="list">
         <div className="list-head">
           <span>
-            <button className="back-btn" style={{ padding: "4px 8px", marginRight: 8 }} onClick={() => setShowFolders((s) => !s)}>☰</button>
+            <button className="back-btn icon-btn" style={{ marginRight: 8 }} onClick={() => setShowFolders((s) => !s)}><FiMenu /></button>
             {folderName} <span style={{ color: "var(--dim2)", fontWeight: 400, fontSize: 12 }}>· {currentEmail}</span>
           </span>
-          <small>{total} msg <button style={{ padding: "2px 8px", marginLeft: 6 }} onClick={() => loadList(account, active)} title="Rafraîchir">↻</button></small>
+          <small>{total} msg <button className="icon-btn" style={{ marginLeft: 6 }} onClick={() => loadList(account, active)} title="Rafraîchir"><FiRefreshCw /></button></small>
         </div>
         <div className="msgs">
           {loadingList ? <div className="empty">Chargement…</div>
@@ -132,7 +141,7 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
                     <span className="msg-from">{addrLabel(who)}</span>
                     <span className="msg-date">{fmtDate(m.receivedAt)}</span>
                   </div>
-                  <div className="msg-subj">{m.hasAttachment ? "📎 " : ""}{m.subject}</div>
+                  <div className="msg-subj">{m.hasAttachment && <FiPaperclip className="clip" />}{m.subject}</div>
                   <div className="msg-prev">{m.preview}</div>
                 </div>
                 {m.unread && <span className="msg-dot" />}
@@ -157,9 +166,9 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
                   </div>
                 </div>
                 <div className="reader-actions">
-                  <button className="back-btn" onClick={() => setSel(null)}>← Retour</button>
-                  <button onClick={() => setCompose(true)}>↩ Répondre</button>
-                  <button className="btn-danger" onClick={() => del(sel.id)}>🗑 Supprimer</button>
+                  <button className="back-btn" onClick={() => setSel(null)}><FiArrowLeft /> Retour</button>
+                  <button onClick={() => setCompose(true)}><FiCornerUpLeft /> Répondre</button>
+                  <button className="btn-danger" onClick={() => del(sel.id)}><FiTrash2 /> Supprimer</button>
                 </div>
               </div>
               <div className="reader-body">
@@ -173,7 +182,7 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
                   <div className="reader-text">{sel.text || "(message vide)"}</div>
                 )}
               </div>
-              {sel.attachments.length > 0 && <div className="attach">📎 {sel.attachments.length} pièce(s) jointe(s) : {sel.attachments.map((a) => a.name).join(", ")}</div>}
+              {sel.attachments.length > 0 && <div className="attach"><FiPaperclip /> {sel.attachments.length} pièce(s) jointe(s) : {sel.attachments.map((a) => a.name).join(", ")}</div>}
             </>
           )}
       </section>
@@ -207,7 +216,7 @@ function Compose({ account, from, defaultTo, defaultSubject, onClose, onSent }: 
         {error && <p className="err">{error}</p>}
         <div className="modal-actions">
           <button onClick={onClose}>Annuler</button>
-          <button className="btn-primary" onClick={send} disabled={sending || !to.trim()}>{sending ? "Envoi…" : "Envoyer"}</button>
+          <button className="btn-primary" onClick={send} disabled={sending || !to.trim()}><FiSend /> {sending ? "Envoi…" : "Envoyer"}</button>
         </div>
       </div>
     </div>
@@ -236,14 +245,14 @@ function Admin({ onBack }: { onBack: () => void }) {
     <div className="admin-wrap">
       <div className="row" style={{ justifyContent: "space-between", marginBottom: 16 }}>
         <div className="brand">Boîtes <b>iditechs.com</b></div>
-        <button onClick={onBack}>← Retour au courrier</button>
+        <button onClick={onBack}><FiArrowLeft /> Retour au courrier</button>
       </div>
       <h3 style={{ fontSize: 15, marginBottom: 8 }}>Créer une boîte</h3>
       <div className="row" style={{ marginBottom: 8 }}>
         <input placeholder="nom" value={name} onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))} style={{ width: 150 }} />
         <span className="tag">@iditechs.com</span>
         <input value={pw} onChange={(e) => setPw(e.target.value)} style={{ width: 190, fontFamily: "ui-monospace, monospace" }} />
-        <button onClick={() => setPw(gen())} title="Générer">🎲</button>
+        <button className="icon-btn" onClick={() => setPw(gen())} title="Générer un mot de passe"><FiShuffle /></button>
         <button className="btn-primary" disabled={busy || !name || !pw} onClick={() => op({ op: "create", name, password: pw }, `Boîte ${name}@iditechs.com créée — mot de passe : ${pw}`)}>Créer</button>
       </div>
       {msg && <p style={{ color: msg.startsWith("Erreur") ? "var(--red)" : "var(--green)", fontSize: 13, margin: "8px 0" }}>{msg}</p>}

@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
+import { FiArrowLeft } from "react-icons/fi";
 
 export function SignInPrompt() {
   const { status, data } = useSession();
@@ -26,7 +27,7 @@ export function SignInPrompt() {
             </button>
           </>
         )}
-        <a className="muted-link" href="/">← Retour au site</a>
+        <a className="muted-link" href="/"><FiArrowLeft style={{ verticalAlign: "-2px" }} /> Retour au site</a>
       </div>
     </div>
   );

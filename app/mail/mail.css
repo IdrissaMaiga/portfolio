@@ -18,7 +18,9 @@
   border: 1px solid var(--border); border-radius: 9px; padding: 8px 11px; outline: none;
   transition: background .15s, border-color .15s;
 }
-.mailapp button { cursor: pointer; }
+.mailapp button { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.mailapp button svg, .mailapp a svg { flex: 0 0 auto; width: 15px; height: 15px; }
+.mailapp .icon-btn { padding: 0; width: 34px; height: 34px; border-radius: 9px; }
 .mailapp button:hover { background: rgba(255,255,255,0.09); border-color: var(--border-hi); }
 .mailapp button:disabled { opacity: .5; cursor: default; }
 .mailapp input:focus, .mailapp textarea:focus, .mailapp select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
@@ -51,6 +53,9 @@
 .mailapp .folder { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--dim); }
 .mailapp .folder:hover { background: var(--panel-hi); color: var(--text); }
 .mailapp .folder.active { background: var(--accent-soft); color: #cfe6ff; font-weight: 600; }
+.mailapp .folder-label { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.mailapp .folder-label svg { flex: 0 0 auto; width: 16px; height: 16px; opacity: 0.85; }
+.mailapp .folder.active .folder-label svg { color: var(--accent); opacity: 1; }
 .mailapp .folder .count { color: var(--dim2); font-size: 12px; }
 .mailapp .folder .unread { background: var(--accent); color: #04101f; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 800; }
 .mailapp .side-foot { border-top: 1px solid var(--border); padding: 12px; font-size: 12px; color: var(--dim); display: flex; flex-direction: column; gap: 8px; }
@@ -72,6 +77,8 @@
 .mailapp .msg.unread .msg-from { color: #fff; font-weight: 700; }
 .mailapp .msg-date { font-size: 11px; color: var(--dim2); white-space: nowrap; }
 .mailapp .msg-subj { font-size: 13px; color: var(--text); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mailapp .msg-subj .clip { display: inline; vertical-align: -2px; margin-right: 4px; color: var(--dim2); }
+.mailapp .attach svg, .mailapp .reader-actions svg, .mailapp .list-head svg { vertical-align: -2px; }
 .mailapp .msg.unread .msg-subj { font-weight: 600; }
 .mailapp .msg-prev { font-size: 12px; color: var(--dim2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mailapp .msg-dot { position: absolute; top: 15px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
