@@ -1,0 +1,102 @@
+/* Self-contained webmail UI, scoped under .mailapp so it never affects the portfolio. */
+.mailapp {
+  --bg:#0f1115; --panel:#171a21; --panel2:#1d212a; --border:#262b36;
+  --text:#e7e9ee; --dim:#9aa3b2; --dim2:#6b7280; --accent:#2f6df6; --accent2:#1e5ae0;
+  --green:#3fb950; --red:#f85149;
+  position: fixed; inset: 0; z-index: 1000; background: var(--bg); color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif; line-height: 1.5;
+}
+.mailapp * { box-sizing: border-box; }
+.mailapp a { color: var(--accent); text-decoration: none; }
+.mailapp button, .mailapp input, .mailapp textarea, .mailapp select {
+  font: inherit; color: var(--text); background: var(--panel2);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; outline: none;
+}
+.mailapp button { cursor: pointer; transition: background .15s; }
+.mailapp button:hover { background: #232833; }
+.mailapp button:disabled { opacity: .5; cursor: default; }
+.mailapp input:focus, .mailapp textarea:focus, .mailapp select:focus { border-color: var(--accent); }
+.mailapp :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mailapp .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.mailapp .btn-primary:hover { background: var(--accent2); }
+.mailapp .btn-danger { color: #ffb4ae; border-color: #5b2422; background: #2a1514; }
+
+.mailapp .login-wrap { height: 100%; display: grid; place-items: center; padding: 20px; }
+.mailapp .login-card { width: 100%; max-width: 360px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; }
+.mailapp .brand { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+.mailapp .brand b { color: var(--accent); }
+.mailapp .login-sub { color: var(--dim); font-size: 13px; margin: 4px 0 20px; }
+.mailapp .login-card form { display: flex; flex-direction: column; gap: 10px; }
+.mailapp .login-card input { padding: 11px 12px; }
+.mailapp .err { color: var(--red); font-size: 13px; text-align: center; }
+.mailapp .muted-link { color: var(--dim2); font-size: 12px; text-align:center; margin-top: 12px; display:block; }
+
+.mailapp .shell { display: grid; grid-template-columns: 230px 360px 1fr; height: 100%; }
+.mailapp .sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+.mailapp .side-top { padding: 14px 16px; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.mailapp .compose-btn { margin: 12px; padding: 10px; }
+.mailapp .folders { overflow-y: auto; flex: 1; padding: 0 8px 12px; }
+.mailapp .folder { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+.mailapp .folder:hover { background: var(--panel2); }
+.mailapp .folder.active { background: #1b2430; color: #fff; }
+.mailapp .folder .count { color: var(--dim2); font-size: 12px; }
+.mailapp .folder .unread { background: var(--accent); color:#fff; border-radius: 999px; padding: 0 7px; font-size: 11px; font-weight: 700; }
+.mailapp .side-foot { border-top: 1px solid var(--border); padding: 12px; font-size: 12px; color: var(--dim); display:flex; flex-direction:column; gap:8px; }
+.mailapp .side-foot .me { color: var(--text); font-weight: 600; word-break: break-all; }
+
+.mailapp .list { background: var(--panel); border-right: 1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
+.mailapp .list-head { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 700; display:flex; align-items:center; justify-content:space-between; }
+.mailapp .list-head small { color: var(--dim2); font-weight: 400; }
+.mailapp .msgs { overflow-y: auto; flex: 1; }
+.mailapp .msg { padding: 11px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.mailapp .msg:hover { background: var(--panel2); }
+.mailapp .msg.active { background: #1b2430; }
+.mailapp .msg.unread .msg-from { color: #fff; font-weight: 700; }
+.mailapp .msg-row1 { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+.mailapp .msg-from { font-size: 14px; font-weight: 600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mailapp .msg-date { font-size: 11px; color: var(--dim2); white-space: nowrap; }
+.mailapp .msg-subj { font-size: 13px; margin-top: 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mailapp .msg-prev { font-size: 12px; color: var(--dim); margin-top: 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mailapp .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background: var(--accent); margin-right:6px; }
+.mailapp .empty { padding: 40px 20px; text-align: center; color: var(--dim2); font-size: 13px; }
+
+.mailapp .reader { display:flex; flex-direction:column; min-height:0; background: var(--bg); }
+.mailapp .reader-head { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.mailapp .reader-subj { font-size: 18px; font-weight: 700; }
+.mailapp .reader-meta { color: var(--dim); font-size: 13px; margin-top: 6px; }
+.mailapp .reader-meta b { color: var(--text); }
+.mailapp .reader-actions { display:flex; gap:8px; margin-top: 12px; flex-wrap: wrap; }
+.mailapp .reader-body { flex: 1; overflow: auto; }
+.mailapp .reader-body iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.mailapp .reader-text { padding: 20px; white-space: pre-wrap; word-break: break-word; font-size: 14px; }
+.mailapp .attach { padding: 10px 20px; border-top: 1px solid var(--border); font-size: 13px; color: var(--dim); }
+.mailapp .placeholder { flex:1; display:grid; place-items:center; color: var(--dim2); }
+
+.mailapp .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 16px; z-index: 1100; }
+.mailapp .modal { width: 100%; max-width: 620px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; display:flex; flex-direction:column; gap:10px; max-height: 90vh; }
+.mailapp .modal h3 { font-size: 16px; }
+.mailapp .modal input, .mailapp .modal textarea { width: 100%; }
+.mailapp .modal textarea { min-height: 200px; resize: vertical; }
+.mailapp .modal-actions { display:flex; gap:8px; justify-content: flex-end; }
+.mailapp .row { display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
+.mailapp .tag { font-size: 11px; color: var(--dim2); }
+
+.mailapp .admin-wrap { padding: 20px; max-width: 920px; margin: 0 auto; height: 100%; overflow-y: auto; }
+.mailapp table { width:100%; border-collapse: collapse; font-size: 13px; }
+.mailapp th, .mailapp td { text-align:left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.mailapp th { color: var(--dim); font-weight: 600; font-size: 12px; }
+
+.mailapp .back-btn { display: none; }
+@media (max-width: 1100px) {
+  .mailapp .shell { grid-template-columns: 200px 1fr; }
+  .mailapp .reader { display:none; }
+  .mailapp .shell.has-reader .list { display:none; }
+  .mailapp .shell.has-reader .reader { display:flex; }
+  .mailapp .back-btn { display:inline-block; }
+}
+@media (max-width: 720px) {
+  .mailapp .shell { grid-template-columns: 1fr; }
+  .mailapp .sidebar { display: none; }
+  .mailapp .shell.show-folders .sidebar { display:flex; position:absolute; z-index: 20; width: 240px; height: 100%; }
+  .mailapp .shell.has-reader .list { display:none; }
+}

@@ -23,6 +23,9 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState("home");
   const { data: session } = useSession();
 
+  // "Mailboxes" appears once you're signed in (owner-only feature).
+  const links = session ? [...navLinks, { name: "Mailboxes", href: "/mail" }] : navLinks;
+
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.pathname.startsWith("/blog")) {
       setActiveSection("blog");
@@ -95,7 +98,7 @@ export default function Navbar() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center">
           <ul className="flex space-x-1">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <li key={link.name}>
                 <Link
                   href={link.href}
@@ -186,7 +189,7 @@ export default function Navbar() {
           >
             <nav className="container mx-auto px-4 py-4">
               <ul className="space-y-2">
-                {navLinks.map((link) => (
+                {links.map((link) => (
                   <li key={link.name}>
                     <Link
                       href={link.href}
