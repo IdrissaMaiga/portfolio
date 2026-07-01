@@ -32,7 +32,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  let body;
+  try { body = await req.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
   const { title, content, tags, description, image, slug } = body;
 
   if (!title || !content) {
@@ -49,7 +52,7 @@ export async function POST(req: NextRequest) {
       slug,
     });
 
-    notifySubscribers({
+    await notifySubscribers({
       title,
       slug: result.slug,
       description: description || "",
@@ -73,7 +76,10 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  let body;
+  try { body = await req.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
   const { slug, ...updates } = body;
 
   if (!slug) {
@@ -94,7 +100,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { slug } = await req.json();
+  let delBody;
+  try { delBody = await req.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const { slug } = delBody;
   if (!slug) {
     return NextResponse.json({ error: "slug is required" }, { status: 400 });
   }

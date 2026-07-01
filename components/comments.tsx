@@ -35,6 +35,7 @@ function CommentForm({
   const { data: session } = useSession();
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   if (!session) {
     return (
@@ -63,6 +64,7 @@ function CommentForm({
     if (!content.trim() || submitting) return;
 
     setSubmitting(true);
+    setError("");
     try {
       const res = await fetch("/api/comments", {
         method: "POST",
@@ -73,7 +75,12 @@ function CommentForm({
         const newComment = await res.json();
         onSubmit(newComment);
         setContent("");
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || "Failed to post comment.");
       }
+    } catch {
+      setError("Something went wrong. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -116,6 +123,7 @@ function CommentForm({
                 Cancel
               </button>
             )}
+            {error && <span className="text-red-400 text-xs">{error}</span>}
           </div>
         </div>
       </div>
@@ -134,8 +142,17 @@ function CommentItem({
   depth: number;
   onReplyAdded: (parentId: string, reply: Comment) => void;
 }) {
+  const { data: session } = useSession();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const maxDepth = 3;
+
+  const handleReplyClick = () => {
+    if (!session) {
+      signIn("google");
+      return;
+    }
+    setShowReplyForm(!showReplyForm);
+  };
 
   return (
     <div className={depth > 0 ? "ml-6 sm:ml-10 border-l-2 border-white/[0.06] pl-4" : ""}>
@@ -171,7 +188,7 @@ function CommentItem({
           </p>
           {depth < maxDepth && (
             <button
-              onClick={() => setShowReplyForm(!showReplyForm)}
+              onClick={handleReplyClick}
               className="mt-1 text-xs text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium"
             >
               Reply
@@ -225,9 +242,12 @@ export default function Comments({ postSlug }: { postSlug: string }) {
 
   useEffect(() => {
     fetch(`/api/comments?postSlug=${encodeURIComponent(postSlug)}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load");
+        return res.json();
+      })
       .then((data) => {
-        setComments(data);
+        if (Array.isArray(data)) setComments(data);
         setLoading(false);
       })
       .catch(() => setLoading(false));

@@ -90,9 +90,8 @@ export default function Navbar() {
               <Image
                 src="/logos/id_.jpg"
                 alt="Idrissa Maiga"
-                width={80}
-                height={80}
-                className="scale-110 rounded-full"
+                fill
+                className="object-cover object-top"
               />
             </div>
             <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#0A66C2] border-2 border-[#0a0f1e] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -114,7 +113,7 @@ export default function Navbar() {
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center">
+        <nav className="hidden xl:flex items-center">
           <ul className="flex space-x-1">
             {navLinks.map((link) => (
               <li key={link.name}>
@@ -227,7 +226,7 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1.5 sm:p-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-all duration-200"
+            className="xl:hidden p-1.5 sm:p-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-all duration-200"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
@@ -247,7 +246,7 @@ export default function Navbar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden border-t border-white/10 bg-[#030712]/95 backdrop-blur-lg safe-area-inset"
+            className="xl:hidden border-t border-white/10 bg-[#030712]/95 backdrop-blur-lg safe-area-inset"
           >
             <nav className="container mx-auto px-4 py-4">
               <ul className="space-y-2">

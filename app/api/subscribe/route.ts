@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Subscribed! You will receive new posts by email." });
   }
 
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  if (!process.env.RESEND_API_KEY) {
     return NextResponse.json({ error: "Email service not configured" }, { status: 500 });
   }
 
@@ -62,12 +62,14 @@ export async function POST(req: NextRequest) {
   const verifyUrl = `${baseUrl}/api/subscribe/verify?token=${subscriber.token}`;
 
   const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    host: "smtp.resend.com",
+    port: 465,
+    secure: true,
+    auth: { user: "resend", pass: process.env.RESEND_API_KEY },
   });
 
   await transporter.sendMail({
-    from: `"Idrissa Maiga" <${process.env.EMAIL_USER}>`,
+    from: `"Idrissa Maiga" <noreply@iditechs.com>`,
     to: email,
     subject: "Confirm your subscription",
     html: `

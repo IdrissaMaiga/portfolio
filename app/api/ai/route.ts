@@ -224,17 +224,19 @@ async function executeTool(name: string, args: any): Promise<{ data: any; client
       if (!senderName || !senderEmail || !senderMessage) {
         return { data: { error: "Missing name, email, or message" }, clientAction: false };
       }
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      if (!process.env.RESEND_API_KEY) {
         return { data: { error: "Email service not configured" }, clientAction: false };
       }
       try {
         const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+          host: "smtp.resend.com",
+          port: 465,
+          secure: true,
+          auth: { user: "resend", pass: process.env.RESEND_API_KEY },
         });
         await transporter.sendMail({
-          from: `"Portfolio AI Chat" <${process.env.EMAIL_USER}>`,
-          to: process.env.OWNER_EMAIL || "maigadrisking@gmail.com",
+          from: '"Portfolio AI Chat" <noreply@iditechs.com>',
+          to: "idrissa.maiga@iditechs.com",
           subject: senderSubject ? `Chat Message: ${senderSubject}` : "New message via AI chat",
           replyTo: senderEmail,
           text: `From: ${senderName} (${senderEmail})\n\nMessage:\n${senderMessage}`,

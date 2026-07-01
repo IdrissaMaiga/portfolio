@@ -17,6 +17,8 @@ import {
 } from "react-icons/fi";
 import FloatingCodeBlock from "@/components/floating-code-block";
 import ArtBg from "@/components/art-bg";
+import EngagementBar from "@/components/engagement-bar";
+import Comments from "@/components/comments";
 
 /* ------------------------------------------------------------------ */
 /*  Project data                                                       */
@@ -306,7 +308,7 @@ export default function DetailedProjectsSection() {
   return (
     <section
       id="projects"
-      className="py-16 sm:py-24 lg:py-32 relative bg-[#050a16] overflow-x-hidden"
+      className="py-12 sm:py-16 lg:py-20 relative bg-[#050a16] overflow-x-hidden"
     >
       <ArtBg variant="projects" />
 
@@ -348,7 +350,7 @@ export default function DetailedProjectsSection() {
           </motion.span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
             Featured{" "}
-            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-500 bg-clip-text text-transparent">
+            <span className="text-white">
               Projects
             </span>
           </h2>
@@ -440,6 +442,15 @@ export default function DetailedProjectsSection() {
                     View details
                     <FiChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                   </span>
+                </div>
+
+                {/* Engagement: like + comment count */}
+                <div className="pt-3 mt-3 border-t border-white/[0.06]">
+                  <EngagementBar
+                    slug={`project:${project.id}`}
+                    compact
+                    onCommentClick={() => openProject(project)}
+                  />
                 </div>
               </div>
             </motion.div>
@@ -617,7 +628,7 @@ export default function DetailedProjectsSection() {
 
               {/* Footer with links */}
               {(selectedProject.githubLink || selectedProject.liveLink) && (
-                <div className="px-6 sm:px-8 pb-6 sm:pb-8 flex flex-wrap gap-3">
+                <div className="px-6 sm:px-8 pb-4 flex flex-wrap gap-3">
                   {selectedProject.githubLink && (
                     <a
                       href={selectedProject.githubLink}
@@ -642,6 +653,14 @@ export default function DetailedProjectsSection() {
                   )}
                 </div>
               )}
+
+              {/* Engagement + Comments */}
+              <div className="px-6 sm:px-8 pb-6 sm:pb-8">
+                <div className="border-t border-white/[0.06] pt-4">
+                  <EngagementBar slug={`project:${selectedProject.id}`} />
+                </div>
+                <Comments postSlug={`project:${selectedProject.id}`} />
+              </div>
             </motion.div>
           </motion.div>
         )}

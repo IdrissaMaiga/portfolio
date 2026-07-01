@@ -7,6 +7,16 @@ interface LinkedInToken {
 }
 
 const TOKEN_KEY = 'linkedin_token';
+const LI_VERSION = '202401';
+
+function liHeaders(token: string) {
+  return {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'LinkedIn-Version': LI_VERSION,
+    'X-Restli-Protocol-Version': '2.0.0',
+  };
+}
 
 export async function getLinkedInToken(): Promise<string | null> {
   try {
@@ -37,23 +47,111 @@ export async function getLinkedInProfileUrn(token: string): Promise<string> {
   const res = await fetch('https://api.linkedin.com/v2/userinfo', {
     headers: { Authorization: `Bearer ${token}` },
   });
+  if (!res.ok) throw new Error(`LinkedIn profile fetch failed: ${res.status}`);
   const data = await res.json();
   return data.sub;
 }
 
-export async function shareToLinkedIn(params: {
-  text: string;
-  title?: string;
-  url?: string;
-}): Promise<{ success: boolean; id?: string; error?: string }> {
-  const token = await getLinkedInToken();
-  if (!token) return { success: false, error: 'No valid LinkedIn token. Authorize first.' };
+async function uploadImage(token: string, ownerUrn: string, imageUrl: string): Promise<string | null> {
+  try {
+    const initRes = await fetch('https://api.linkedin.com/rest/images?action=initializeUpload', {
+      method: 'POST',
+      headers: liHeaders(token),
+      body: JSON.stringify({
+        initializeUploadRequest: { owner: ownerUrn },
+      }),
+    });
 
-  const profileUrn = await getLinkedInProfileUrn(token);
+    if (!initRes.ok) {
+      const errText = await initRes.text();
+      console.error(`LinkedIn image init failed [${initRes.status}]: ${errText}`);
+      return null;
+    }
 
+    const initData = await initRes.json();
+    const { uploadUrl, image: imageUrn } = initData.value;
+
+    const imgRes = await fetch(imageUrl);
+    if (!imgRes.ok) {
+      console.error(`Failed to download image [${imgRes.status}]: ${imageUrl}`);
+      return null;
+    }
+    const imgBuffer = Buffer.from(await imgRes.arrayBuffer());
+
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/octet-stream',
+      },
+      body: imgBuffer,
+    });
+
+    if (!uploadRes.ok) {
+      console.error(`LinkedIn image upload failed [${uploadRes.status}]`);
+      return null;
+    }
+
+    return imageUrn;
+  } catch (err) {
+    console.error('LinkedIn image upload error:', err);
+    return null;
+  }
+}
+
+async function postViaPostsAPI(token: string, authorUrn: string, params: ShareParams, imageUrn: string | null): Promise<{ success: boolean; id?: string; error?: string }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body: Record<string, any> = {
+    author: authorUrn,
+    commentary: params.text,
+    visibility: 'PUBLIC',
+    distribution: {
+      feedDistribution: 'MAIN_FEED',
+      targetEntities: [],
+      thirdPartyDistributionChannels: [],
+    },
+    lifecycleState: 'PUBLISHED',
+    isReshareDisabledByAuthor: false,
+  };
+
+  if (params.url) {
+    body.content = {
+      article: {
+        source: params.url,
+        ...(params.title && { title: params.title }),
+        ...(params.description && { description: params.description }),
+        ...(imageUrn && { thumbnail: imageUrn }),
+      },
+    };
+  } else if (imageUrn) {
+    body.content = {
+      media: {
+        ...(params.title && { title: params.title }),
+        id: imageUrn,
+      },
+    };
+  }
+
+  const res = await fetch('https://api.linkedin.com/rest/posts', {
+    method: 'POST',
+    headers: liHeaders(token),
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error(`LinkedIn Posts API failed [${res.status}]: ${err}`);
+    return { success: false, error: `Posts API [${res.status}]: ${err}` };
+  }
+
+  const postId = res.headers.get('x-restli-id');
+  return { success: true, id: postId || undefined };
+}
+
+async function postViaUGC(token: string, authorUrn: string, params: ShareParams): Promise<{ success: boolean; id?: string; error?: string }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const body: any = {
-    author: `urn:li:person:${profileUrn}`,
+    author: authorUrn,
     lifecycleState: 'PUBLISHED',
     specificContent: {
       'com.linkedin.ugc.ShareContent': {
@@ -64,6 +162,7 @@ export async function shareToLinkedIn(params: {
             status: 'READY',
             originalUrl: params.url,
             ...(params.title && { title: { text: params.title } }),
+            ...(params.description && { description: { text: params.description } }),
           }],
         }),
       },
@@ -83,9 +182,50 @@ export async function shareToLinkedIn(params: {
 
   if (!res.ok) {
     const err = await res.text();
-    return { success: false, error: err };
+    console.error(`LinkedIn UGC API failed [${res.status}]: ${err}`);
+    return { success: false, error: `UGC API [${res.status}]: ${err}` };
   }
 
   const result = await res.json();
   return { success: true, id: result.id };
+}
+
+interface ShareParams {
+  text: string;
+  title?: string;
+  description?: string;
+  url?: string;
+  imageUrl?: string;
+}
+
+export async function shareToLinkedIn(params: ShareParams): Promise<{ success: boolean; id?: string; error?: string }> {
+  const token = await getLinkedInToken();
+  if (!token) return { success: false, error: 'No valid LinkedIn token. Authorize first.' };
+
+  const profileUrn = await getLinkedInProfileUrn(token);
+  const authorUrn = `urn:li:person:${profileUrn}`;
+
+  // Try image upload if image provided
+  let imageUrn: string | null = null;
+  if (params.imageUrl) {
+    imageUrn = await uploadImage(token, authorUrn, params.imageUrl);
+    if (!imageUrn) console.log('Image upload failed, will try posting without image');
+  }
+
+  // Try Posts API first (supports images)
+  const postsResult = await postViaPostsAPI(token, authorUrn, params, imageUrn);
+  if (postsResult.success) {
+    console.log('Posted via Posts API:', postsResult.id);
+    return postsResult;
+  }
+
+  // Fall back to UGC API (no image support, but reliable)
+  console.log('Posts API failed, falling back to UGC API');
+  const ugcResult = await postViaUGC(token, authorUrn, params);
+  if (ugcResult.success) {
+    console.log('Posted via UGC API:', ugcResult.id);
+    return ugcResult;
+  }
+
+  return { success: false, error: `Both APIs failed. Posts: ${postsResult.error} | UGC: ${ugcResult.error}` };
 }

@@ -51,15 +51,17 @@ export async function POST(req: Request) {
 
     const { name, email, subject, message } = body;
     
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    if (!process.env.RESEND_API_KEY) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     let transporter;
     try {
       transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+        host: 'smtp.resend.com',
+        port: 465,
+        secure: true,
+        auth: { user: 'resend', pass: process.env.RESEND_API_KEY },
       });
     } catch {
       return NextResponse.json({ error: 'Email service unavailable' }, { status: 500 });
@@ -71,8 +73,8 @@ export async function POST(req: Request) {
     const safeMessage = escapeHtml(message);
 
     const mailOptions = {
-      from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
-      to: 'maigadrisking@gmail.com',
+      from: '"Portfolio Contact" <noreply@iditechs.com>',
+      to: 'idrissa.maiga@iditechs.com',
       subject: subject ? `Portfolio Contact: ${subject}` : 'New message from portfolio',
       replyTo: email,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,

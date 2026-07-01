@@ -213,7 +213,7 @@ export default function ConnectSection() {
       {/* ================================================================ */}
       {/*  CONTACT AREA                                                     */}
       {/* ================================================================ */}
-      <div className="py-20 sm:py-28 lg:py-40 relative z-10">
+      <div className="py-12 sm:py-16 lg:py-20 relative z-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section header */}
           <div className="mb-10 sm:mb-14 text-center">
@@ -222,7 +222,7 @@ export default function ConnectSection() {
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mt-5 mb-5 text-white">
               Let&apos;s{" "}
-              <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
+              <span className="text-white">
                 Connect
               </span>
             </h2>
@@ -575,7 +575,7 @@ export default function ConnectSection() {
               &copy; 2026 Idrissa Maiga. All rights reserved.
             </p>
             <p className="text-gray-600 text-xs sm:text-sm">
-              Built with Next.js, Three.js &amp; Tailwind CSS
+              Built with Next.js &amp; Tailwind CSS
             </p>
           </div>
         </div>

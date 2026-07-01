@@ -11,6 +11,7 @@ import {
   FiBriefcase,
   FiCalendar,
   FiBookOpen,
+  FiLinkedin,
 } from "react-icons/fi";
 import AnimatedCounter from "@/components/animated-counter";
 import FloatingCodeBlock from "@/components/floating-code-block";
@@ -54,12 +55,12 @@ const techHighlights = [
 ];
 
 const timelineNodes = [
-  { label: "Bamako, Mali", sub: "Born & raised", color: "#f59e0b" },
-  { label: "USA - YES Program", sub: "Cultural exchange scholar", color: "#10b981" },
-  { label: "Budapest", sub: "Relocated to Hungary", color: "#3b82f6" },
-  { label: "Obuda University", sub: "BSc Computer Software Eng.", color: "#8b5cf6" },
-  { label: "EISMEA", sub: "Full Stack Engineer", color: "#06b6d4" },
-  { label: "4D Consulting", sub: "Software Developer Intern", color: "#ec4899" },
+  { label: "Bamako, Mali", sub: "Born & raised", color: "#f59e0b", year: "2002", icon: <FiMapPin className="w-3.5 h-3.5" /> },
+  { label: "USA — YES Program", sub: "Cultural exchange scholar", color: "#10b981", year: "2019", icon: <FiGlobe className="w-3.5 h-3.5" /> },
+  { label: "Budapest", sub: "Relocated to Hungary", color: "#3b82f6", year: "2023", icon: <FiMapPin className="w-3.5 h-3.5" /> },
+  { label: "Óbuda University", sub: "BSc Computer Software Eng.", color: "#8b5cf6", year: "2023", icon: <FiBookOpen className="w-3.5 h-3.5" /> },
+  { label: "EISMEA", sub: "Full Stack Engineer", color: "#06b6d4", year: "2025", icon: <FiBriefcase className="w-3.5 h-3.5" /> },
+  { label: "4D Consulting", sub: "Software Developer Intern", color: "#ec4899", year: "Now", icon: <FiBriefcase className="w-3.5 h-3.5" /> },
 ];
 
 const stats = [
@@ -86,7 +87,7 @@ export default function StorySection() {
   return (
     <section
       id="story"
-      className="py-20 sm:py-28 lg:py-40 relative bg-[#080d1c] overflow-x-hidden"
+      className="py-12 sm:py-16 lg:py-20 relative bg-[#080d1c] overflow-x-hidden"
     >
       <ArtBg variant="story" />
 
@@ -122,7 +123,7 @@ export default function StorySection() {
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
             My{" "}
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-500 bg-clip-text text-transparent">
+            <span className="text-white">
               Story
             </span>
           </h2>
@@ -147,19 +148,28 @@ export default function StorySection() {
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
               <div className="relative z-10">
-                {/* Profile photo in glowing ring */}
+                {/* Profile photo in glowing ring — links to LinkedIn */}
                 <div className="flex justify-center mb-6">
-                  <div className="relative w-28 h-28 sm:w-32 sm:h-32">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 blur-md opacity-50" />
-                    <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-cyan-400/30">
+                  <a
+                    href="https://www.linkedin.com/in/idrissa-maiga-16581b245/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative w-28 h-28 sm:w-32 sm:h-32 group"
+                    title="View LinkedIn Profile"
+                  >
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 blur-md opacity-50 group-hover:opacity-80 transition-opacity duration-300" />
+                    <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-cyan-400/30 group-hover:border-blue-400 transition-colors duration-300">
                       <Image
                         src="/logos/id_.jpg"
                         alt="Idrissa Maiga"
                         fill
-                        className="object-cover"
+                        className="object-cover object-top"
                       />
                     </div>
-                  </div>
+                    <span className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#0A66C2] border-2 border-[#080d1c] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg">
+                      <FiLinkedin className="w-3.5 h-3.5 text-white" />
+                    </span>
+                  </a>
                 </div>
 
                 <h3 className="text-xl font-bold text-white mb-6 text-center">
@@ -201,44 +211,76 @@ export default function StorySection() {
 
           {/* RIGHT: Timeline + Tabs */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Career Timeline */}
+            {/* Career Journey */}
             <div className="rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] p-6 sm:p-8 overflow-hidden">
-              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-8 flex items-center gap-2">
+                <span className="w-6 h-px bg-gradient-to-r from-cyan-500 to-transparent" />
                 Career Journey
               </h4>
-              <div className="relative">
-                {/* Connecting line */}
-                <div className="absolute top-4 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/20 via-blue-500/20 to-pink-500/20 hidden sm:block" />
 
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-4 sm:gap-2">
+              <div className="relative">
+                {/* Vertical connecting line (mobile) / horizontal (desktop) */}
+                <div className="absolute top-0 bottom-0 left-[19px] w-px bg-gradient-to-b from-amber-500/30 via-blue-500/30 to-pink-500/30 sm:hidden" />
+                <motion.div
+                  className="absolute top-5 left-0 right-0 h-px hidden sm:block"
+                  style={{ background: "linear-gradient(90deg, #f59e0b30, #3b82f630, #8b5cf630, #06b6d430, #ec489930)" }}
+                  initial={{ scaleX: 0 }}
+                  whileInView={{ scaleX: 1 }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
+                  viewport={{ once: true, margin: "-80px" }}
+                />
+
+                <div className="flex flex-col sm:grid sm:grid-cols-6 gap-6 sm:gap-3">
                   {timelineNodes.map((node, i) => (
                     <motion.div
                       key={node.label}
-                      initial={{ scale: 0, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.5, delay: i * 0.15, ease: "backOut" }}
-                      viewport={{ once: true, margin: "-80px" }}
-                      className="timeline-node flex sm:flex-col items-center sm:items-center gap-3 sm:gap-0"
+                      initial={{ y: 20, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.5, delay: i * 0.12, ease: "easeOut" }}
+                      viewport={{ once: true, margin: "-60px" }}
+                      className="relative group"
                     >
-                      {/* Dot */}
-                      <div
-                        className="relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 sm:mb-3"
-                        style={{
-                          borderColor: node.color,
-                          boxShadow: `0 0 12px ${node.color}40`,
-                        }}
-                      >
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: node.color }}
-                        />
-                      </div>
-                      {/* Label */}
-                      <div className="sm:text-center">
-                        <p className="text-sm font-semibold text-white leading-tight">
-                          {node.label}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5">{node.sub}</p>
+                      {/* Mobile: horizontal card layout */}
+                      {/* Desktop: vertical card layout */}
+                      <div className="flex sm:flex-col items-start sm:items-center gap-4 sm:gap-0">
+                        {/* Node circle */}
+                        <div className="relative z-10 flex-shrink-0 sm:mb-4">
+                          <motion.div
+                            className="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300"
+                            style={{
+                              borderColor: node.color,
+                              background: `${node.color}15`,
+                              boxShadow: `0 0 20px ${node.color}25`,
+                            }}
+                            whileHover={{
+                              scale: 1.15,
+                              boxShadow: `0 0 30px ${node.color}50`,
+                            }}
+                          >
+                            <span style={{ color: node.color }}>{node.icon}</span>
+                          </motion.div>
+                        </div>
+
+                        {/* Content card */}
+                        <div className="flex-1 sm:text-center">
+                          {/* Year badge */}
+                          <span
+                            className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-1.5"
+                            style={{
+                              color: node.color,
+                              background: `${node.color}15`,
+                              border: `1px solid ${node.color}25`,
+                            }}
+                          >
+                            {node.year}
+                          </span>
+                          <p className="text-sm font-semibold text-white leading-tight">
+                            {node.label}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                            {node.sub}
+                          </p>
+                        </div>
                       </div>
                     </motion.div>
                   ))}

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { FiClock, FiCalendar } from "react-icons/fi";
 import type { BlogPost } from "@/lib/blog";
+import EngagementBar from "@/components/engagement-bar";
+import { useRouter } from "next/navigation";
 
 interface BlogCardProps {
   post: BlogPost;
@@ -12,6 +14,7 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post, index }: BlogCardProps) {
+  const router = useRouter();
   const formattedDate = new Date(post.date).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -67,7 +70,7 @@ export default function BlogCard({ post, index }: BlogCardProps) {
               </p>
 
               {/* Tags */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {post.tags.map((tag) => (
                   <span
                     key={tag}
@@ -76,6 +79,15 @@ export default function BlogCard({ post, index }: BlogCardProps) {
                     {tag}
                   </span>
                 ))}
+              </div>
+
+              {/* Engagement: like + comment count */}
+              <div className="pt-3 border-t border-white/[0.06]">
+                <EngagementBar
+                  slug={post.slug}
+                  compact
+                  onCommentClick={() => router.push(`/blog/${post.slug}#comments-section`)}
+                />
               </div>
             </div>
           </div>

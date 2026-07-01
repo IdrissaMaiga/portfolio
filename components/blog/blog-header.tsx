@@ -29,9 +29,8 @@ export default function BlogHeader({ post }: BlogHeaderProps) {
             <Image
               src="/logos/id_.jpg"
               alt="Idrissa Maiga"
-              width={36}
-              height={36}
-              className="scale-110 rounded-full"
+              fill
+              className="object-cover object-top"
             />
           </div>
           <span className="text-sm font-medium text-gray-300">Idrissa Maiga</span>
