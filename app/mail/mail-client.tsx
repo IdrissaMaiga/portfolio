@@ -17,6 +17,18 @@ function fmtDate(s: string): string {
     ? d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
     : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
 }
+function initials(a: Addr[]): string {
+  const s = (a?.[0]?.name || a?.[0]?.email || "?").trim();
+  const parts = s.replace(/[^a-zA-Z0-9 ]/g, " ").trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? s[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+const AV_COLORS = ["#4da6ff", "#22c55e", "#f59e0b", "#ec4899", "#a855f7", "#14b8a6", "#fb7185", "#38bdf8"];
+function avatarColor(a: Addr[]): string {
+  const s = (a?.[0]?.email || a?.[0]?.name || "?");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return AV_COLORS[h % AV_COLORS.length];
+}
 
 export function MailClient({ owner, accounts }: { owner: string; accounts: Account[] }) {
   const [account, setAccount] = useState(accounts[0]?.accountId ?? "");
@@ -110,16 +122,23 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
         <div className="msgs">
           {loadingList ? <div className="empty">Chargement…</div>
             : emails.length === 0 ? <div className="empty">Aucun message.</div>
-            : emails.map((m) => (
+            : emails.map((m) => {
+              const who = activeFolder?.role === "sent" ? m.to : m.from;
+              return (
               <div key={m.id} className={`msg ${m.unread ? "unread" : ""} ${sel?.id === m.id ? "active" : ""}`} onClick={() => openEmail(m.id)}>
-                <div className="msg-row1">
-                  <span className="msg-from">{m.unread && <span className="dot" />}{addrLabel(activeFolder?.role === "sent" ? m.to : m.from)}</span>
-                  <span className="msg-date">{fmtDate(m.receivedAt)}</span>
+                <div className="msg-av" style={{ background: avatarColor(who) }}>{initials(who)}</div>
+                <div className="msg-body">
+                  <div className="msg-row1">
+                    <span className="msg-from">{addrLabel(who)}</span>
+                    <span className="msg-date">{fmtDate(m.receivedAt)}</span>
+                  </div>
+                  <div className="msg-subj">{m.hasAttachment ? "📎 " : ""}{m.subject}</div>
+                  <div className="msg-prev">{m.preview}</div>
                 </div>
-                <div className="msg-subj">{m.hasAttachment ? "📎 " : ""}{m.subject}</div>
-                <div className="msg-prev">{m.preview}</div>
+                {m.unread && <span className="msg-dot" />}
               </div>
-            ))}
+              );
+            })}
         </div>
       </section>
 
@@ -130,10 +149,12 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
             <>
               <div className="reader-head">
                 <div className="reader-subj">{sel.subject}</div>
-                <div className="reader-meta">
-                  <div><b>{addrLabel(sel.from)}</b></div>
-                  <div>À : {addrLabel(sel.to)}{sel.cc.length ? ` · Cc : ${addrLabel(sel.cc)}` : ""}</div>
-                  <div>{new Date(sel.receivedAt).toLocaleString("fr-FR")}</div>
+                <div className="reader-sender">
+                  <div className="reader-av" style={{ background: avatarColor(sel.from) }}>{initials(sel.from)}</div>
+                  <div className="reader-meta">
+                    <div><b>{addrLabel(sel.from)}</b> <span className="reader-date">{new Date(sel.receivedAt).toLocaleString("fr-FR")}</span></div>
+                    <div>À : {addrLabel(sel.to)}{sel.cc.length ? ` · Cc : ${addrLabel(sel.cc)}` : ""}</div>
+                  </div>
                 </div>
                 <div className="reader-actions">
                   <button className="back-btn" onClick={() => setSel(null)}>← Retour</button>
@@ -143,7 +164,11 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
               </div>
               <div className="reader-body">
                 {sel.html ? (
-                  <iframe sandbox="" srcDoc={`<!doctype html><html><head><base target="_blank"><meta name="color-scheme" content="light"></head><body style="margin:12px;font-family:Segoe UI,system-ui,sans-serif">${sel.html}</body></html>`} title="message" />
+                  <iframe
+                    sandbox="allow-popups allow-popups-to-escape-sandbox"
+                    srcDoc={`<!doctype html><html><head><base target="_blank"><meta name="color-scheme" content="light"><style>body{margin:14px;font-family:-apple-system,Segoe UI,system-ui,sans-serif;color:#1a1a1a;line-height:1.55} a{color:#2b6df6}</style></head><body>${sel.html}</body></html>`}
+                    title="message"
+                  />
                 ) : (
                   <div className="reader-text">{sel.text || "(message vide)"}</div>
                 )}
