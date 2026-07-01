@@ -5,8 +5,10 @@ import { signOut } from "next-auth/react";
 import {
   FiEdit, FiSettings, FiArrowLeft, FiMenu, FiRefreshCw, FiTrash2, FiCornerUpLeft,
   FiPaperclip, FiLogOut, FiSend, FiShuffle, FiInbox, FiFileText, FiAlertOctagon, FiArchive, FiFolder,
-  FiChevronDown, FiCheck,
+  FiChevronDown, FiCheck, FiX, FiDownload,
 } from "react-icons/fi";
+
+const fmtSize = (n: number) => (n < 1024 ? `${n} o` : n < 1048576 ? `${(n / 1024).toFixed(0)} Ko` : `${(n / 1048576).toFixed(1)} Mo`);
 
 const FOLDER_ICON: Record<string, ReactNode> = {
   inbox: <FiInbox />, sent: <FiSend />, drafts: <FiFileText />,
@@ -17,7 +19,7 @@ type Account = { accountId: string; name: string; email: string; description: st
 type Mailbox = { id: string; name: string; role: string | null; totalEmails: number; unreadEmails: number };
 type Addr = { name: string | null; email: string };
 type Summary = { id: string; subject: string; from: Addr[]; to: Addr[]; receivedAt: string; preview: string; unread: boolean; hasAttachment: boolean };
-type Full = Summary & { cc: Addr[]; html: string | null; text: string | null; attachments: { name: string; type: string; size: number }[] };
+type Full = Summary & { cc: Addr[]; html: string | null; text: string | null; attachments: { name: string; type: string; size: number; blobId: string }[] };
 
 const FOLDER_FR: Record<string, string> = { inbox: "Boîte de réception", sent: "Envoyés", drafts: "Brouillons", trash: "Corbeille", junk: "Spam", archive: "Archives" };
 const addrLabel = (a: Addr[]) => (!a?.length ? "—" : a.map((x) => x.name || x.email).join(", "));
@@ -185,7 +187,15 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
                   <div className="reader-text">{sel.text || "(message vide)"}</div>
                 )}
               </div>
-              {sel.attachments.length > 0 && <div className="attach"><FiPaperclip /> {sel.attachments.length} pièce(s) jointe(s) : {sel.attachments.map((a) => a.name).join(", ")}</div>}
+              {sel.attachments.length > 0 && (
+                <div className="attach">
+                  {sel.attachments.map((a, i) => (
+                    <a key={i} className="attach-chip dl" href={`/api/mail/download?account=${account}&blobId=${encodeURIComponent(a.blobId)}&name=${encodeURIComponent(a.name)}`} target="_blank" rel="noopener noreferrer" title={`${a.name} · ${fmtSize(a.size)}`}>
+                      <FiPaperclip /><span className="attach-name">{a.name}</span><span className="attach-size">{fmtSize(a.size)}</span><FiDownload />
+                    </a>
+                  ))}
+                </div>
+              )}
             </>
           )}
       </section>
@@ -233,13 +243,20 @@ function Compose({ account, from, defaultTo, defaultSubject, onClose, onSent }: 
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState(defaultSubject);
   const [text, setText] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  function addFiles(list: FileList | null) { if (list) setFiles((p) => [...p, ...Array.from(list)]); }
   async function send() {
     setError(""); setSending(true);
-    const r = await fetch("/api/mail/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ account, to, cc, subject, text }) }).then((x) => x.json());
+    const fd = new FormData();
+    fd.append("account", account); fd.append("to", to); fd.append("cc", cc);
+    fd.append("subject", subject); fd.append("text", text);
+    files.forEach((f) => fd.append("files", f));
+    const r = await fetch("/api/mail/send", { method: "POST", body: fd }).then((x) => x.json());
     setSending(false);
-    if (r.ok) onSent(); else setError(r.error === "no_recipient" ? "Destinataire invalide." : "Échec de l'envoi.");
+    if (r.ok) onSent();
+    else setError(r.error === "no_recipient" ? "Destinataire invalide." : r.error === "too_large" ? "Pièces jointes trop volumineuses (max 25 Mo)." : "Échec de l'envoi.");
   }
   return (
     <div className="modal-bg" onClick={onClose}>
@@ -249,8 +266,24 @@ function Compose({ account, from, defaultTo, defaultSubject, onClose, onSent }: 
         <input placeholder="Cc (optionnel)" value={cc} onChange={(e) => setCc(e.target.value)} />
         <input placeholder="Objet" value={subject} onChange={(e) => setSubject(e.target.value)} />
         <textarea placeholder="Votre message…" value={text} onChange={(e) => setText(e.target.value)} />
+        {files.length > 0 && (
+          <div className="attach-list">
+            {files.map((f, i) => (
+              <div key={i} className="attach-chip">
+                <FiPaperclip />
+                <span className="attach-name">{f.name}</span>
+                <span className="attach-size">{fmtSize(f.size)}</span>
+                <button className="attach-x icon-btn" onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} title="Retirer"><FiX /></button>
+              </div>
+            ))}
+          </div>
+        )}
         {error && <p className="err">{error}</p>}
         <div className="modal-actions">
+          <label className="btn attach-btn" style={{ marginRight: "auto" }}>
+            <FiPaperclip /> Joindre
+            <input type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+          </label>
           <button onClick={onClose}>Annuler</button>
           <button className="btn-primary" onClick={send} disabled={sending || !to.trim()}><FiSend /> {sending ? "Envoi…" : "Envoyer"}</button>
         </div>

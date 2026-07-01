@@ -116,7 +116,7 @@ export async function listEmails(
 
 export type FullEmail = EmailSummary & {
   cc: Addr[]; html: string | null; text: string | null;
-  attachments: { name: string; type: string; size: number }[];
+  attachments: { name: string; type: string; size: number; blobId: string }[];
 };
 
 export async function getEmail(c: Creds, accountId: string, id: string): Promise<FullEmail | null> {
@@ -137,7 +137,7 @@ export async function getEmail(c: Creds, accountId: string, id: string): Promise
     receivedAt: m.receivedAt, preview: m.preview ?? "", unread: false, hasAttachment: !!m.hasAttachment,
     html: htmlPart ? bv[htmlPart.partId].value : null,
     text: textPart ? bv[textPart.partId].value : null,
-    attachments: (m.attachments ?? []).map((a: any) => ({ name: a.name || "fichier", type: a.type || "application/octet-stream", size: a.size || 0 })),
+    attachments: (m.attachments ?? []).map((a: any) => ({ name: a.name || "fichier", type: a.type || "application/octet-stream", size: a.size || 0, blobId: a.blobId })),
   };
 }
 
@@ -154,9 +154,33 @@ export async function deleteEmail(c: Creds, accountId: string, id: string) {
   await request(c, [["Email/set", { accountId, destroy: [id] }, "0"]]);
 }
 
+export type Uploaded = { blobId: string; type: string; size: number };
+export type SendAttachment = { blobId: string; type: string; name: string };
+
+/** Upload a file to the account's blob store; returns its blobId for use as an attachment. */
+export async function uploadBlob(c: Creds, accountId: string, bytes: Buffer, mime: string): Promise<Uploaded> {
+  const res = await fetch(`${BASE}/jmap/upload/${accountId}/`, {
+    method: "POST",
+    headers: headers(c, { "Content-Type": mime || "application/octet-stream" }),
+    body: bytes as any,
+  });
+  if (res.status === 401) throw new Error("invalid_credentials");
+  if (!res.ok) throw new Error(`upload_${res.status}: ${(await res.text()).slice(0, 150)}`);
+  const d = await res.json();
+  return { blobId: d.blobId, type: d.type || mime || "application/octet-stream", size: d.size ?? bytes.length };
+}
+
+/** Download an attachment's bytes (for streaming back to the browser). */
+export async function getBlob(c: Creds, accountId: string, blobId: string, name: string): Promise<{ bytes: Buffer; type: string } | null> {
+  const res = await fetch(`${BASE}/jmap/download/${accountId}/${blobId}/${encodeURIComponent(name || "file")}`, { headers: headers(c) });
+  if (!res.ok) return null;
+  const type = res.headers.get("content-type") || "application/octet-stream";
+  return { bytes: Buffer.from(await res.arrayBuffer()), type };
+}
+
 export async function sendEmail(
   c: Creds, accountId: string,
-  msg: { to: Addr[]; cc?: Addr[]; subject: string; text: string; html?: string | null }
+  msg: { to: Addr[]; cc?: Addr[]; subject: string; text: string; html?: string | null; attachments?: SendAttachment[] }
 ): Promise<void> {
   const boxes = await listMailboxes(c, accountId);
   const drafts = boxes.find((b) => b.role === "drafts");
@@ -167,10 +191,14 @@ export async function sendEmail(
   const identity = identities.find((i: any) => i.email?.toLowerCase() === c.email.toLowerCase()) ?? identities[0];
   if (!identity) throw new Error("no_identity");
   const bodyValues: Record<string, { value: string }> = { text: { value: msg.text } };
-  const bodyStructure: any = msg.html
+  if (msg.html) bodyValues.html = { value: msg.html };
+  const bodyPart: any = msg.html
     ? { type: "multipart/alternative", subParts: [{ partId: "text", type: "text/plain" }, { partId: "html", type: "text/html" }] }
     : { partId: "text", type: "text/plain" };
-  if (msg.html) bodyValues.html = { value: msg.html };
+  const atts = msg.attachments ?? [];
+  const bodyStructure: any = atts.length
+    ? { type: "multipart/mixed", subParts: [bodyPart, ...atts.map((a) => ({ blobId: a.blobId, type: a.type, name: a.name, disposition: "attachment" }))] }
+    : bodyPart;
   const draft = {
     mailboxIds: { [drafts.id]: true }, keywords: { $draft: true, $seen: true },
     from: [{ name: identity.name || null, email: identity.email }],

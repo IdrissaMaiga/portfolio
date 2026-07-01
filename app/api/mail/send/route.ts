@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOwner } from "@/lib/mail/owner";
-import { adminCreds, sendEmail } from "@/lib/mail/jmap";
+import { adminCreds, sendEmail, uploadBlob, type SendAttachment } from "@/lib/mail/jmap";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,16 +12,34 @@ function parseAddrs(s: string): { name: null; email: string }[] {
     .map((email) => ({ name: null, email }));
 }
 
+const MAX_TOTAL = 25 * 1024 * 1024; // 25 MB total attachments
+
 export async function POST(req: NextRequest) {
   if (!(await getOwner())) return NextResponse.json({ ok: false }, { status: 401 });
-  const { account, to, cc, subject, text } = await req.json().catch(() => ({}) as Record<string, string>);
+  const form = await req.formData();
+  const account = String(form.get("account") ?? "");
   if (!account) return NextResponse.json({ ok: false, error: "account required" }, { status: 400 });
-  const toList = parseAddrs(to);
+  const toList = parseAddrs(String(form.get("to") ?? ""));
   if (!toList.length) return NextResponse.json({ ok: false, error: "no_recipient" }, { status: 400 });
+
+  const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
+  let totalSize = 0;
+  for (const f of files) totalSize += f.size;
+  if (totalSize > MAX_TOTAL) return NextResponse.json({ ok: false, error: "too_large" }, { status: 413 });
+
   try {
+    const attachments: SendAttachment[] = [];
+    for (const f of files) {
+      const buf = Buffer.from(await f.arrayBuffer());
+      const up = await uploadBlob(adminCreds(), account, buf, f.type || "application/octet-stream");
+      attachments.push({ blobId: up.blobId, type: up.type, name: f.name || "fichier" });
+    }
     await sendEmail(adminCreds(), account, {
-      to: toList, cc: parseAddrs(cc ?? ""),
-      subject: String(subject ?? "").trim() || "(sans objet)", text: String(text ?? ""),
+      to: toList,
+      cc: parseAddrs(String(form.get("cc") ?? "")),
+      subject: String(form.get("subject") ?? "").trim() || "(sans objet)",
+      text: String(form.get("text") ?? ""),
+      attachments,
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
