@@ -26,7 +26,8 @@ export async function GET(req: NextRequest) {
 
   if (!tokenRes.ok) {
     const err = await tokenRes.text();
-    return NextResponse.json({ error: 'Token exchange failed', details: err }, { status: 500 });
+    console.error("LinkedIn token exchange failed:", err);
+    return NextResponse.json({ error: 'Token exchange failed' }, { status: 500 });
   }
 
   const tokenData = await tokenRes.json();

@@ -34,7 +34,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { postSlug } = await req.json();
+  let body: { postSlug?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { postSlug } = body;
   if (!postSlug) {
     return NextResponse.json(
       { error: "postSlug is required" },
@@ -42,17 +49,28 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const existing = await db.like.findUnique({
-    where: { postSlug_userId: { postSlug, userId } },
-  });
+  try {
+    const result = await db.$transaction(async (tx) => {
+      const existing = await tx.like.findUnique({
+        where: { postSlug_userId: { postSlug, userId } },
+      });
 
-  if (existing) {
-    await db.like.delete({ where: { id: existing.id } });
-    const count = await db.like.count({ where: { postSlug } });
-    return NextResponse.json({ count, liked: false });
+      if (existing) {
+        await tx.like.delete({ where: { id: existing.id } });
+        const count = await tx.like.count({ where: { postSlug } });
+        return { count, liked: false };
+      }
+
+      await tx.like.create({ data: { postSlug, userId } });
+      const count = await tx.like.count({ where: { postSlug } });
+      return { count, liked: true };
+    });
+
+    return NextResponse.json(result, { status: result.liked ? 201 : 200 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to toggle like" },
+      { status: 500 }
+    );
   }
-
-  await db.like.create({ data: { postSlug, userId } });
-  const count = await db.like.count({ where: { postSlug } });
-  return NextResponse.json({ count, liked: true }, { status: 201 });
 }

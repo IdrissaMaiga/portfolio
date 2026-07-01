@@ -412,6 +412,57 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+
+  .text-glow-blue {
+    text-shadow: 0 0 40px rgba(77, 166, 255, 0.15), 0 0 80px rgba(77, 166, 255, 0.08);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 40px rgba(0, 229, 255, 0.15), 0 0 80px rgba(0, 229, 255, 0.08);
+  }
+
+  .anime-btn {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .anime-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .anime-btn:hover::before {
+    left: 100%;
+  }
+
+  .anime-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: border-color 0.5s, box-shadow 0.5s;
+  }
+
+  .anime-card:hover {
+    border-color: rgba(77, 166, 255, 0.2);
+    box-shadow: 0 0 30px rgba(77, 166, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .anime-card-cyan {
+    border-color: rgba(0, 229, 255, 0.06);
+  }
+
+  .anime-card-cyan:hover {
+    border-color: rgba(0, 229, 255, 0.2);
+    box-shadow: 0 0 30px rgba(0, 229, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
 }
 
 @layer utilities {

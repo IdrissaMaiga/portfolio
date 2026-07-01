@@ -66,7 +66,7 @@ function DoubleDoor() {
   const lightSpill = useTransform(scrollYProgress, [0.2, 0.45], [0, 0.6]);
 
   return (
-    <div ref={ref} className="relative w-full h-[50vh] pointer-events-none z-30">
+    <div ref={ref} className="relative w-full h-[12vh] pointer-events-none z-30">
       <motion.div style={{ opacity: containerOpacity }} className="absolute inset-0 sticky top-0">
         <DoorFrame>
           {/* Left panel */}
@@ -120,7 +120,7 @@ function SingleDoor() {
   const glow = useTransform(scrollYProgress, [0.2, 0.45], [0, 0.8]);
 
   return (
-    <div ref={ref} className="relative w-full h-[45vh] pointer-events-none z-30" style={{ perspective: "1500px" }}>
+    <div ref={ref} className="relative w-full h-[10vh] pointer-events-none z-30" style={{ perspective: "1500px" }}>
       <motion.div style={{ opacity: containerOpacity }} className="absolute inset-0">
         <DoorFrame>
           <motion.div
@@ -157,7 +157,7 @@ function SlideUp() {
   const glow = useTransform(scrollYProgress, [0.2, 0.45], [0, 0.7]);
 
   return (
-    <div ref={ref} className="relative w-full h-[45vh] pointer-events-none z-30 overflow-hidden">
+    <div ref={ref} className="relative w-full h-[12vh] pointer-events-none z-30 overflow-hidden">
       <motion.div style={{ opacity: containerOpacity }} className="absolute inset-0">
         <DoorFrame>
           <motion.div style={{ y }} className="absolute inset-[3px]">
@@ -189,7 +189,7 @@ function Iris() {
   const clipPath = useTransform(clipRadius, (v: number) => `circle(${v}% at 50% 50%)`);
 
   return (
-    <div ref={ref} className="relative w-full h-[45vh] pointer-events-none z-30">
+    <div ref={ref} className="relative w-full h-[10vh] pointer-events-none z-30">
       <motion.div style={{ opacity: containerOpacity }} className="absolute inset-0">
         <DoorFrame>
           {/* Solid panel with circular cutout that grows */}

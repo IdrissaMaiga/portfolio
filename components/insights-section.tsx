@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 import FloatingCodeBlock from "@/components/floating-code-block";
 import ArtBg from "@/components/art-bg";
+import EngagementBar from "@/components/engagement-bar";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -113,7 +114,7 @@ export default function InsightsSection() {
   return (
     <section
       id="insights"
-      className="py-20 sm:py-28 lg:py-36 relative bg-[#070c1a] overflow-x-hidden"
+      className="py-12 sm:py-16 lg:py-20 relative bg-[#070c1a] overflow-x-hidden"
     >
       <ArtBg variant="insights" />
 
@@ -134,7 +135,7 @@ export default function InsightsSection() {
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
               Latest{" "}
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="text-white">
                 Insights
               </span>
             </h2>
@@ -213,7 +214,7 @@ export default function InsightsSection() {
                           </p>
 
                           {/* Tags */}
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 mb-4">
                             {post.tags.slice(0, 3).map((tag) => (
                               <span
                                 key={tag}
@@ -222,6 +223,11 @@ export default function InsightsSection() {
                                 {tag}
                               </span>
                             ))}
+                          </div>
+
+                          {/* Engagement */}
+                          <div className="pt-3 border-t border-white/[0.06]">
+                            <EngagementBar slug={post.slug} compact />
                           </div>
                         </div>
                       </div>

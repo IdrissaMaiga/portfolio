@@ -15,7 +15,8 @@ const config: Config = {
         display: ["var(--font-space)"],
       },
       colors: {
-        // Custom colors can be added here
+        "neon-blue": "#4da6ff",
+        "neon-cyan": "#00e5ff",
       },
       animation: {
         float: "float 6s ease-in-out infinite",

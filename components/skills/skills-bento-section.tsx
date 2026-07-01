@@ -43,7 +43,7 @@ export default function SkillsBentoSection() {
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mt-6 mb-6 text-white">
             Skills &{" "}
-            <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 bg-clip-text text-transparent">
+            <span className="text-white">
               Technologies
             </span>
           </h2>

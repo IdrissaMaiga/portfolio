@@ -58,12 +58,39 @@ model Like {
   @@map("likes")
 }
 
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  userId    String?  @map("user_id")
+  sessionId String   @map("session_id")
+  ip        String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([sessionId])
+  @@index([ip])
+  @@map("page_views")
+}
+
 model AppSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("app_settings")
+}
+
+model Subscriber {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  verified   Boolean  @default(false)
+  token      String   @unique @default(cuid())
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("subscribers")
 }
 
 model Comment {

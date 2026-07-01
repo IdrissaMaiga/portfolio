@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
   const result = await shareToLinkedIn({
     text,
     title: post.title,
+    description: excerpt,
     url: postUrl,
+    imageUrl: post.image || undefined,
   });
 
   if (!result.success) {

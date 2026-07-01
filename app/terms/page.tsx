@@ -69,7 +69,7 @@ export default function TermsOfService() {
         <h2>Contact</h2>
         <p>
           For questions about these terms, contact{" "}
-          <a href="mailto:maigadrisking@gmail.com">maigadrisking@gmail.com</a>.
+          <a href="mailto:idrissa.maiga@iditechs.com">idrissa.maiga@iditechs.com</a>.
         </p>
 
         <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-800">

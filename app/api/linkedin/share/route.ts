@@ -8,13 +8,13 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { text, title, url } = body;
+  const { text, title, description, url, imageUrl } = body;
 
   if (!text) {
     return NextResponse.json({ error: 'Text is required' }, { status: 400 });
   }
 
-  const result = await shareToLinkedIn({ text, title, url });
+  const result = await shareToLinkedIn({ text, title, description, url, imageUrl });
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 500 });
   }

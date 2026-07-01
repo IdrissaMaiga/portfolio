@@ -7,7 +7,7 @@ import { getPostBySlug } from "@/lib/blog";
 import { components } from "@/components/blog/mdx-components";
 import BlogHeader from "@/components/blog/blog-header";
 import Comments from "@/components/comments";
-import LikeButton from "@/components/like-button";
+import PostEngagementHeader from "@/components/post-engagement-header";
 import { FiArrowLeft } from "react-icons/fi";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +78,9 @@ export default async function BlogPostPage({ params }: PageProps) {
           {/* Post header */}
           <BlogHeader post={post} />
 
+          {/* Like + Comment shortcut bar */}
+          <PostEngagementHeader slug={slug} />
+
           {/* Cover image */}
           {post.image && (
             <div className="relative w-full h-[200px] sm:h-[300px] md:h-[400px] rounded-2xl overflow-hidden my-8 border border-white/[0.06]">
@@ -94,13 +97,10 @@ export default async function BlogPostPage({ params }: PageProps) {
             <MDXRemote source={post.content} components={components} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
           </article>
 
-          {/* Like button */}
-          <div className="mt-10 flex items-center gap-4">
-            <LikeButton postSlug={slug} />
-          </div>
-
           {/* Comments */}
-          <Comments postSlug={slug} />
+          <div id="comments-section">
+            <Comments postSlug={slug} />
+          </div>
 
           {/* Bottom back link */}
           <div className="mt-16 pt-8 border-t border-white/[0.06]">

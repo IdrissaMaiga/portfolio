@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
       );
 
       if (!geminiRes.ok) {
-        const err = await geminiRes.text();
-        return NextResponse.json({ error: "Image generation failed", details: err }, { status: 500 });
+        console.error("Gemini error:", geminiRes.status, await geminiRes.text());
+        return NextResponse.json({ error: "Image generation failed" }, { status: 500 });
       }
 
       const geminiData = await geminiRes.json();

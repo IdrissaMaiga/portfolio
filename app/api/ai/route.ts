@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { getAllPosts, getPostBySlug, BlogPost } from "@/lib/blog";
+import nodemailer from "nodemailer";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 const MAX_TOOL_ROUNDS = 3;
@@ -215,8 +219,34 @@ async function executeTool(name: string, args: any): Promise<{ data: any; client
         return { data: { error: "Could not fetch post" }, clientAction: false };
       }
     }
-    case "send_message_to_idrissa":
-      return { data: { status: "message_queued", recipient: "idrissa.maiga@iditechs.com" }, clientAction: true };
+    case "send_message_to_idrissa": {
+      const { name: senderName, email: senderEmail, message: senderMessage, subject: senderSubject } = args;
+      if (!senderName || !senderEmail || !senderMessage) {
+        return { data: { error: "Missing name, email, or message" }, clientAction: false };
+      }
+      if (!process.env.RESEND_API_KEY) {
+        return { data: { error: "Email service not configured" }, clientAction: false };
+      }
+      try {
+        const transporter = nodemailer.createTransport({
+          host: "smtp.resend.com",
+          port: 465,
+          secure: true,
+          auth: { user: "resend", pass: process.env.RESEND_API_KEY },
+        });
+        await transporter.sendMail({
+          from: '"Portfolio AI Chat" <noreply@iditechs.com>',
+          to: "idrissa.maiga@iditechs.com",
+          subject: senderSubject ? `Chat Message: ${senderSubject}` : "New message via AI chat",
+          replyTo: senderEmail,
+          text: `From: ${senderName} (${senderEmail})\n\nMessage:\n${senderMessage}`,
+        });
+        return { data: { status: "message_sent", recipient: "idrissa.maiga@iditechs.com" }, clientAction: false };
+      } catch (err) {
+        console.error("Failed to send message via AI chat:", err);
+        return { data: { error: "Failed to send message" }, clientAction: false };
+      }
+    }
     default:
       return { data: { error: `Unknown tool: ${name}` }, clientAction: false };
   }
@@ -278,19 +308,67 @@ async function gemini(apiKey: string, messages: Msg[], tools: typeof TOOLS): Pro
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as { id?: string })?.id;
+    if (!userId) {
+      return NextResponse.json({ error: "Sign in to use the AI assistant" }, { status: 401 });
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "AI not configured" }, { status: 500 });
 
-    const { userCommand, history } = await req.json();
-    if (!userCommand) return NextResponse.json({ error: "No message" }, { status: 400 });
+    let body: { userCommand?: string; sessionId?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    const { userCommand, sessionId } = body;
+    if (!userCommand || typeof userCommand !== "string") {
+      return NextResponse.json({ error: "No message" }, { status: 400 });
+    }
+    if (userCommand.length > 2000) {
+      return NextResponse.json({ error: "Message too long (max 2000 characters)" }, { status: 400 });
+    }
+
+    // Resolve or create chat session
+    let chatSessionId = sessionId;
+    if (chatSessionId) {
+      const existing = await db.chatSession.findUnique({ where: { id: chatSessionId } });
+      if (!existing || existing.userId !== userId) {
+        return NextResponse.json({ error: "Session not found" }, { status: 404 });
+      }
+    } else {
+      const newSession = await db.chatSession.create({
+        data: {
+          userId,
+          title: userCommand.slice(0, 80),
+        },
+      });
+      chatSessionId = newSession.id;
+    }
+
+    // Save user message
+    await db.chatMessage.create({
+      data: { sessionId: chatSessionId, sender: "User", text: userCommand },
+    });
+
+    // Load history from DB (last 8 messages)
+    const dbMessages = await db.chatMessage.findMany({
+      where: { sessionId: chatSessionId },
+      orderBy: { createdAt: "asc" },
+      select: { sender: true, text: true },
+    });
+    const historySlice = dbMessages.slice(-9, -1); // exclude the one we just saved (it's the current msg)
 
     const messages: Msg[] = [
       { role: "user", parts: [{ text: CONTEXT }] },
       { role: "model", parts: [{ text: "Loaded. I know everything about Idrissa — projects, skills, experience, blog, metrics. What do you want to know?" }] },
-      ...(Array.isArray(history) ? history.slice(-8).map((m: { sender: string; text: string }) => ({
+      ...historySlice.map((m) => ({
         role: (m.sender === "User" ? "user" : "model") as Msg["role"],
         parts: [{ text: m.text }],
-      })) : []),
+      })),
       { role: "user", parts: [{ text: userCommand }] },
     ];
 
@@ -341,9 +419,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ response: text, ...(action && { action }) });
+    // Save AI response to DB
+    await db.chatMessage.create({
+      data: { sessionId: chatSessionId, sender: "AI", text },
+    });
+
+    // Touch session updatedAt
+    await db.chatSession.update({
+      where: { id: chatSessionId },
+      data: { updatedAt: new Date() },
+    });
+
+    return NextResponse.json({
+      response: text,
+      sessionId: chatSessionId,
+      ...(action && { action }),
+    });
   } catch (err) {
     console.error("Agent error:", err);
-    return NextResponse.json({ error: "Agent error", details: err instanceof Error ? err.message : "Unknown" }, { status: 500 });
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

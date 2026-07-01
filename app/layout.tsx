@@ -6,6 +6,7 @@ import SessionProvider from "@/components/session-provider";
 import ChatButton from "@/components/chat-button";
 import ActionListener from "@/components/action-listener";
 import Navbar from "@/components/navbar-section";
+import PageTracker from "@/components/page-tracker";
 
 // Font configuration with responsive weights
 const inter = Inter({
@@ -130,6 +131,7 @@ export default function RootLayout({
             {children}
             <ChatButton />
             <ActionListener />
+            <PageTracker />
           </ThemeProvider>
         </SessionProvider>
       </body>
