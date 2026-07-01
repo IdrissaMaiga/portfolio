@@ -26,6 +26,15 @@
 .mailapp button svg, .mailapp a svg { flex: 0 0 auto; width: 16px; height: 16px; }
 .mailapp .icon-btn { padding: 0; width: 36px; height: 36px; }
 .mailapp button:hover { background: rgba(255,255,255,0.09); border-color: var(--border-hi); }
+/* Custom select — native OS styling stripped, matched to the theme with a chevron. */
+.mailapp select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  cursor: pointer; padding-right: 34px; text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239aa3b5' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center;
+}
+.mailapp select:hover { border-color: var(--border-hi); background-color: rgba(255,255,255,0.07); }
+.mailapp select option { background: #0d1220; color: var(--text); }
 .mailapp button:disabled { opacity: .5; cursor: default; }
 .mailapp input:focus, .mailapp textarea:focus, .mailapp select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .mailapp :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
