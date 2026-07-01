@@ -61,7 +61,16 @@
 .mailapp .side-top { padding: 16px 12px 10px; }
 .mailapp .side-top .brand { font-size: 18px; }
 .mailapp .side-actions { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 9px; border-bottom: 1px solid var(--border); }
-.mailapp .acct-switch { width: 100%; height: 38px; }
+.mailapp .acct-switch-wrap { position: relative; }
+.mailapp .acct-switch { width: 100%; height: 42px; padding: 0 10px; display: flex; align-items: center; gap: 9px; justify-content: flex-start; border-radius: 11px; }
+.mailapp .acct-av { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #04101f; }
+.mailapp .acct-email { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; }
+.mailapp .acct-chev { flex: 0 0 auto; color: var(--dim2); transition: transform .18s; }
+.mailapp .acct-menu { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #10182a; border: 1px solid var(--border-hi); border-radius: 12px; padding: 6px; z-index: 40; box-shadow: 0 24px 60px rgba(0,0,0,0.55); display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }
+.mailapp .acct-item { width: 100%; height: 44px; padding: 0 9px; display: flex; align-items: center; gap: 9px; justify-content: flex-start; background: transparent; border: none; border-radius: 9px; }
+.mailapp .acct-item:hover { background: var(--panel-hi); }
+.mailapp .acct-item.active { background: var(--accent-soft); }
+.mailapp .acct-check { flex: 0 0 auto; color: var(--accent); }
 .mailapp .compose-btn { width: 100%; height: 40px; margin: 0; font-size: 13.5px; font-weight: 700; border-radius: 10px; }
 .mailapp .folders { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
 .mailapp .folder { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 38px; padding: 0 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--dim); }

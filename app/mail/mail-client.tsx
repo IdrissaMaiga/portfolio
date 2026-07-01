@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { signOut } from "next-auth/react";
 import {
   FiEdit, FiSettings, FiArrowLeft, FiMenu, FiRefreshCw, FiTrash2, FiCornerUpLeft,
   FiPaperclip, FiLogOut, FiSend, FiShuffle, FiInbox, FiFileText, FiAlertOctagon, FiArchive, FiFolder,
+  FiChevronDown, FiCheck,
 } from "react-icons/fi";
 
 const FOLDER_ICON: Record<string, ReactNode> = {
@@ -99,9 +100,7 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
       <aside className="sidebar" onClick={(e) => { if (e.target === e.currentTarget) setShowFolders(false); }}>
         <div className="side-top"><span className="brand">iDi<b>Techs</b> Mail</span></div>
         <div className="side-actions">
-          <select className="acct-switch" value={account} onChange={(e) => setAccount(e.target.value)} title="Choisir une boîte">
-            {accounts.map((a) => <option key={a.accountId} value={a.accountId}>{a.email}</option>)}
-          </select>
+          <AccountSwitcher accounts={accounts} account={account} onChange={setAccount} />
           <button className="compose-btn btn-primary" onClick={() => setCompose(true)}><FiEdit /> Nouveau message</button>
         </div>
         <nav className="folders">
@@ -192,6 +191,39 @@ export function MailClient({ owner, accounts }: { owner: string; accounts: Accou
       </section>
 
       {compose && <Compose account={account} from={currentEmail} defaultTo={sel ? sel.from[0]?.email ?? "" : ""} defaultSubject={sel ? `Re: ${sel.subject}` : ""} onClose={() => setCompose(false)} onSent={() => setCompose(false)} />}
+    </div>
+  );
+}
+
+function AccountSwitcher({ accounts, account, onChange }: { accounts: Account[]; account: string; onChange: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const cur = accounts.find((a) => a.accountId === account);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  const av = (email: string): Addr[] => [{ name: null, email }];
+  return (
+    <div className="acct-switch-wrap" ref={ref}>
+      <button className="acct-switch" onClick={() => setOpen((o) => !o)} title="Choisir une boîte">
+        <span className="acct-av" style={{ background: avatarColor(av(cur?.email ?? "")) }}>{initials(av(cur?.email ?? "?"))}</span>
+        <span className="acct-email">{cur?.email ?? "—"}</span>
+        <FiChevronDown className="acct-chev" style={{ transform: open ? "rotate(180deg)" : "none" }} />
+      </button>
+      {open && (
+        <div className="acct-menu">
+          {accounts.map((a) => (
+            <button key={a.accountId} className={`acct-item ${a.accountId === account ? "active" : ""}`} onClick={() => { onChange(a.accountId); setOpen(false); }}>
+              <span className="acct-av" style={{ background: avatarColor(av(a.email)) }}>{initials(av(a.email))}</span>
+              <span className="acct-email">{a.email}</span>
+              {a.accountId === account && <FiCheck className="acct-check" />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
