@@ -383,18 +383,29 @@ function Settings({ account, onBack }: { account?: Account; onBack: () => void }
       </div>
 
       <h3 className="cfg-h">Envoi (SMTP)</h3>
-      <div className="cfg-note">
-        L&apos;envoi depuis une application externe n&apos;est pas encore activé sur le serveur partagé.
-        En attendant, <b>envoyez depuis ce webmail</b> (bouton « Nouveau message »).
+      <div className="cfg-card">
+        {[
+          { label: "Serveur (SMTP)", value: "mail.agenticareer.com", k: "ssrv" },
+          { label: "Port", value: "465 (SSL) ou 587 (STARTTLS)", k: "sport" },
+          { label: "Sécurité", value: "SSL/TLS (465) ou STARTTLS (587)", k: "ssec", dim: true },
+          { label: "Nom d'utilisateur", value: username, k: "suser" },
+          { label: "Authentification", value: "requise — même mot de passe que l'IMAP", k: "sauth", dim: true },
+        ].map((r) => (
+          <div className="cfg-row" key={r.k}>
+            <span className="cfg-label">{r.label}</span>
+            <span className={`cfg-value ${r.dim ? "dim" : ""}`}>{r.value}</span>
+            {!r.dim && <button className="icon-btn" onClick={() => copy(r.value, r.k)} title="Copier">{copied === r.k ? <FiCheck /> : <FiCopy />}</button>}
+          </div>
+        ))}
       </div>
 
       <h3 className="cfg-h">Étapes rapides</h3>
       <ol className="cfg-steps">
-        <li><b>Gmail</b> (app ou web) : Paramètres → Ajouter un compte → <i>Autre (IMAP)</i> → serveur ci-dessus, utilisateur <b>{username}</b>.</li>
-        <li><b>Outlook</b> : Ajouter un compte → Options avancées → <i>Configurer manuellement</i> → IMAP.</li>
-        <li><b>Apple Mail</b> : Réglages → Mail → Comptes → Ajouter un compte → <i>Autre</i> → IMAP.</li>
+        <li><b>Gmail</b> (app ou web) : Paramètres → Ajouter un compte → <i>Autre (IMAP)</i> → serveur IMAP ci-dessus, utilisateur <b>{username}</b>. Pour l&apos;envoi, serveur SMTP <b>mail.agenticareer.com</b> port <b>465</b>.</li>
+        <li><b>Outlook</b> : Ajouter un compte → Options avancées → <i>Configurer manuellement</i> → IMAP (réception + envoi ci-dessus).</li>
+        <li><b>Apple Mail</b> : Réglages → Mail → Comptes → Ajouter → <i>Autre</i> → IMAP (réception + envoi ci-dessus).</li>
       </ol>
-      <p className="cfg-foot">Pour le mot de passe : <b>Gérer les boîtes</b> → <b>Reset MDP</b> (affiché une seule fois).</p>
+      <p className="cfg-foot">Nom d&apos;utilisateur = <b>{username}</b> (pas l&apos;email). Mot de passe : <b>Gérer les boîtes</b> → <b>Reset MDP</b> (affiché une seule fois).</p>
     </div>
   );
 }
