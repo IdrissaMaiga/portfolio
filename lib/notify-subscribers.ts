@@ -1,5 +1,5 @@
 import { db } from "./db";
-import nodemailer from "nodemailer";
+import { sendMail, mailConfigured } from "./mailer";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -11,17 +11,10 @@ export async function notifySubscribers(post: {
   description: string;
   image?: string;
 }) {
-  if (!process.env.RESEND_API_KEY) return;
+  if (!mailConfigured()) return;
 
   const subscribers = await db.subscriber.findMany({ where: { verified: true } });
   if (subscribers.length === 0) return;
-
-  const transporter = nodemailer.createTransport({
-    host: "smtp.resend.com",
-    port: 465,
-    secure: true,
-    auth: { user: "resend", pass: process.env.RESEND_API_KEY },
-  });
 
   const baseUrl = process.env.NEXTAUTH_URL || "https://idrissamaiga.iditechs.com";
   const postUrl = `${baseUrl}/blog/${post.slug}`;
@@ -29,7 +22,7 @@ export async function notifySubscribers(post: {
   const results = await Promise.allSettled(
     subscribers.map((sub) => {
       const unsubscribeUrl = `${baseUrl}/api/subscribe/verify?token=${sub.token}&action=unsubscribe`;
-      return transporter.sendMail({
+      return sendMail({
         from: `"Idrissa Maiga" <noreply@iditechs.com>`,
         to: sub.email,
         subject: `New Post: ${post.title}`,

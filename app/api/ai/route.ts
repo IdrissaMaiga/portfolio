@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getAllPosts, getPostBySlug, BlogPost } from "@/lib/blog";
-import nodemailer from "nodemailer";
+import { sendMail, mailConfigured } from "@/lib/mailer";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 const MAX_TOOL_ROUNDS = 3;
@@ -224,17 +224,11 @@ async function executeTool(name: string, args: any): Promise<{ data: any; client
       if (!senderName || !senderEmail || !senderMessage) {
         return { data: { error: "Missing name, email, or message" }, clientAction: false };
       }
-      if (!process.env.RESEND_API_KEY) {
+      if (!mailConfigured()) {
         return { data: { error: "Email service not configured" }, clientAction: false };
       }
       try {
-        const transporter = nodemailer.createTransport({
-          host: "smtp.resend.com",
-          port: 465,
-          secure: true,
-          auth: { user: "resend", pass: process.env.RESEND_API_KEY },
-        });
-        await transporter.sendMail({
+        await sendMail({
           from: '"Portfolio AI Chat" <noreply@iditechs.com>',
           to: "idrissa.maiga@iditechs.com",
           subject: senderSubject ? `Chat Message: ${senderSubject}` : "New message via AI chat",

@@ -1,6 +1,6 @@
 // File path: app/api/contact/route.ts
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { sendMail, mailConfigured } from '@/lib/mailer';
 
 // Define interface for request body
 interface ContactForm {
@@ -50,21 +50,9 @@ export async function POST(req: Request) {
     }
 
     const { name, email, subject, message } = body;
-    
-    if (!process.env.RESEND_API_KEY) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-    }
 
-    let transporter;
-    try {
-      transporter = nodemailer.createTransport({
-        host: 'smtp.resend.com',
-        port: 465,
-        secure: true,
-        auth: { user: 'resend', pass: process.env.RESEND_API_KEY },
-      });
-    } catch {
-      return NextResponse.json({ error: 'Email service unavailable' }, { status: 500 });
+    if (!mailConfigured()) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     const safeName = escapeHtml(name);
@@ -93,7 +81,7 @@ export async function POST(req: Request) {
     };
 
     try {
-      await transporter.sendMail(mailOptions);
+      await sendMail(mailOptions);
     } catch (err) {
       console.error('Email send failed:', err);
       return NextResponse.json({ error: 'Failed to send. Try again later.' }, { status: 500 });

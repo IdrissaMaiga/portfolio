@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import nodemailer from "nodemailer";
+import { sendMail, mailConfigured } from "@/lib/mailer";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(req: NextRequest) {
@@ -54,21 +54,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Subscribed! You will receive new posts by email." });
   }
 
-  if (!process.env.RESEND_API_KEY) {
+  if (!mailConfigured()) {
     return NextResponse.json({ error: "Email service not configured" }, { status: 500 });
   }
 
   const baseUrl = process.env.NEXTAUTH_URL || "https://idrissamaiga.iditechs.com";
   const verifyUrl = `${baseUrl}/api/subscribe/verify?token=${subscriber.token}`;
 
-  const transporter = nodemailer.createTransport({
-    host: "smtp.resend.com",
-    port: 465,
-    secure: true,
-    auth: { user: "resend", pass: process.env.RESEND_API_KEY },
-  });
-
-  await transporter.sendMail({
+  await sendMail({
     from: `"Idrissa Maiga" <noreply@iditechs.com>`,
     to: email,
     subject: "Confirm your subscription",
