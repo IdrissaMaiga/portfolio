@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 import {
   FiEdit, FiSettings, FiArrowLeft, FiMenu, FiRefreshCw, FiTrash2, FiCornerUpLeft,
   FiPaperclip, FiLogOut, FiSend, FiShuffle, FiInbox, FiFileText, FiAlertOctagon, FiArchive, FiFolder,
-  FiChevronDown, FiCheck, FiX, FiDownload, FiServer, FiCopy,
+  FiChevronDown, FiCheck, FiX, FiDownload, FiServer, FiCopy, FiEye, FiEyeOff,
 } from "react-icons/fi";
 
 const fmtSize = (n: number) => (n < 1024 ? `${n} o` : n < 1048576 ? `${(n / 1024).toFixed(0)} Ko` : `${(n / 1048576).toFixed(1)} Mo`);
@@ -358,7 +358,7 @@ function Settings({ account, onBack }: { account?: Account; onBack: () => void }
     { label: "Port", value: "993", k: "port" },
     { label: "Sécurité", value: "SSL / TLS", k: "sec" },
     { label: "Nom d'utilisateur", value: username, k: "user" },
-    { label: "Mot de passe", value: "Gérer les boîtes → Reset MDP", k: "pw", dim: true },
+    { label: "Mot de passe", value: "Gérer les boîtes → bouton œil (afficher)", k: "pw", dim: true },
   ];
   return (
     <div className="admin-wrap">
@@ -405,19 +405,21 @@ function Settings({ account, onBack }: { account?: Account; onBack: () => void }
         <li><b>Outlook</b> : Ajouter un compte → Options avancées → <i>Configurer manuellement</i> → IMAP (réception + envoi ci-dessus).</li>
         <li><b>Apple Mail</b> : Réglages → Mail → Comptes → Ajouter → <i>Autre</i> → IMAP (réception + envoi ci-dessus).</li>
       </ol>
-      <p className="cfg-foot">Nom d&apos;utilisateur = <b>{username}</b> (pas l&apos;email). Mot de passe : <b>Gérer les boîtes</b> → <b>Reset MDP</b> (affiché une seule fois).</p>
+      <p className="cfg-foot">Nom d&apos;utilisateur = <b>{username}</b> (pas l&apos;email). Mot de passe : <b>Gérer les boîtes</b> → bouton <b>œil</b> pour l&apos;afficher.</p>
     </div>
   );
 }
 
 function Admin({ onBack }: { onBack: () => void }) {
-  type Box = { id: number; name: string; emails: string[]; description: string | null; quota: number; usedQuota: number };
+  type Box = { id: number; name: string; emails: string[]; description: string | null; quota: number; usedQuota: number; password: string | null };
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [pw, setPw] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [show, setShow] = useState<Record<string, boolean>>({});
+  const [copied, setCopied] = useState("");
   const gen = () => { const c = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"; const a = new Uint32Array(16); crypto.getRandomValues(a); let s = ""; for (let i = 0; i < 16; i++) s += c[a[i] % c.length]; return s; };
   const mb = (b: number) => (b / 1048576).toFixed(1) + " MB";
   const load = useCallback(async () => { setLoading(true); const r = await fetch("/api/mail/admin").then((x) => x.json()); setLoading(false); if (r.ok) setBoxes(r.mailboxes); }, []);
@@ -446,15 +448,25 @@ function Admin({ onBack }: { onBack: () => void }) {
       <h3 style={{ fontSize: 15, margin: "20px 0 8px" }}>Boîtes existantes</h3>
       {loading ? <p style={{ color: "var(--dim)" }}>Chargement…</p> : (
         <table>
-          <thead><tr><th>Adresse(s)</th><th>Description</th><th>Stockage</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Adresse(s)</th><th>Mot de passe</th><th>Stockage</th><th>Actions</th></tr></thead>
           <tbody>
             {boxes.map((b) => (
               <tr key={b.id}>
                 <td><b>{b.name}</b><br /><span style={{ color: "var(--dim)", fontSize: 12 }}>{b.emails.join(", ")}</span></td>
-                <td style={{ color: "var(--dim)" }}>{b.description || "—"}</td>
-                <td style={{ whiteSpace: "nowrap" }}>{mb(b.usedQuota)} / {mb(b.quota)}</td>
+                <td style={{ whiteSpace: "nowrap" }}>
+                  {b.password ? (
+                    <div className="row" style={{ gap: 4 }}>
+                      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 13 }}>{show[b.name] ? b.password : "•".repeat(10)}</span>
+                      <button className="icon-btn" title={show[b.name] ? "Masquer" : "Afficher"} onClick={() => setShow((s) => ({ ...s, [b.name]: !s[b.name] }))}>{show[b.name] ? <FiEyeOff /> : <FiEye />}</button>
+                      <button className="icon-btn" title="Copier" onClick={() => { navigator.clipboard?.writeText(b.password!); setCopied(b.name); setTimeout(() => setCopied(""), 1200); }}>{copied === b.name ? <FiCheck /> : <FiCopy />}</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { const np = gen(); if (confirm(`Définir et enregistrer le mot de passe de ${b.name}@iditechs.com ?`)) op({ op: "reset", name: b.name, password: np }, `Mot de passe ${b.name} enregistré.`); }}>Définir</button>
+                  )}
+                </td>
+                <td style={{ whiteSpace: "nowrap", color: "var(--dim)" }}>{mb(b.usedQuota)} / {mb(b.quota)}</td>
                 <td><div className="row">
-                  <button onClick={() => { const np = gen(); if (confirm(`Réinitialiser le mot de passe de ${b.name}@iditechs.com ?`)) op({ op: "reset", name: b.name, password: np }, `Nouveau mot de passe ${b.name} : ${np}`); }}>Reset MDP</button>
+                  <button onClick={() => { const np = gen(); if (confirm(`Changer le mot de passe de ${b.name}@iditechs.com ?`)) op({ op: "reset", name: b.name, password: np }, `Nouveau mot de passe ${b.name} enregistré.`); }}>Changer MDP</button>
                   <button className="btn-danger" onClick={() => { if (confirm(`Supprimer définitivement ${b.name}@iditechs.com ?`)) op({ op: "delete", name: b.name }, `Boîte ${b.name} supprimée.`); }}>Suppr.</button>
                 </div></td>
               </tr>

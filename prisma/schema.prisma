@@ -110,3 +110,11 @@ model Comment {
   @@index([parentId])
   @@map("comments")
 }
+
+model MailboxSecret {
+  name      String   @id
+  secret    String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("mailbox_secrets")
+}
